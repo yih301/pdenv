@@ -1,0 +1,6 @@
+setup.py
+gym_panda.egg-info/PKG-INFO
+gym_panda.egg-info/SOURCES.txt
+gym_panda.egg-info/dependency_links.txt
+gym_panda.egg-info/requires.txt
+gym_panda.egg-info/top_level.txt
