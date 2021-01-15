@@ -14,7 +14,7 @@ class PandaEnv(gym.Env):
   def __init__(self):
     # create simulation (GUI)
     self.urdfRootPath = pybullet_data.getDataPath()
-    p.connect(p.GUI)
+    p.connect(p.DIRECT)
     p.setGravity(0, 0, -9.81)
 
     # set up camera
@@ -29,9 +29,9 @@ class PandaEnv(gym.Env):
     # obj1.load()
     # p.resetBasePositionAndOrientation(obj1.body_id, [0.7, -0.2, 0.1], [0, 0, 0, 1])
 
-    self.n = 5
-    self.action_space = spaces.Box(low=-5.0, high=+5.0, shape=(self.n, ), dtype=np.float32)
-    self.observation_space = spaces.Box(low=-np.inf, high=+np.inf, shape=(21,), dtype=np.float32)
+    self.n = 9
+    self.action_space = spaces.Box(low=-1.0, high=+1.0, shape=(self.n, ), dtype=np.float32)
+    self.observation_space = spaces.Box(low=-np.inf, high=+np.inf, shape=(33,), dtype=np.float32)
 
     # load a panda robot
     self.panda = Panda()
@@ -46,8 +46,8 @@ class PandaEnv(gym.Env):
   def step(self, action):
     # get current state
     state = self.panda.state
-
-    self.panda.step(mode=0, djoint=action)
+    action /= 500
+    self.panda.step(mode=0,  djoint=action)
 
     # take simulation step
     p.stepSimulation()

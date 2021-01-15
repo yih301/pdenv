@@ -167,7 +167,7 @@ class SkipStepsWrapperNoVAEPoint(gym.Wrapper):
         self.env = env
         self.time_step = 0
         self.goal = np.array([0.45, 0, 0.6])
-        self.eps_len = 4000
+        self.eps_len = 500
 
     def reset(self):
         # state = self.env.reset()['ee_position']
@@ -176,7 +176,7 @@ class SkipStepsWrapperNoVAEPoint(gym.Wrapper):
             self.env.panda.state['joint_position'],# 5
             self.env.panda.state['joint_velocity'],# 5
             self.env.panda.state['joint_torque'],# 5
-            self.env.panda.state['ee_position'],# 5
+            self.env.panda.state['ee_position'],# 3
             self.env.panda.state['ee_euler'], # 3
             ), axis=None)
         self.time_step = 0
@@ -188,11 +188,11 @@ class SkipStepsWrapperNoVAEPoint(gym.Wrapper):
         self.time_step += 1
 
         state = self.env.panda.state['ee_position']
-        done = (self.time_step > self.eps_len)
-        dis = np.linalg.norm(state - self.goal)
+        done =(self.time_step > self.eps_len)
+        dis = 10 * np.linalg.norm(state - self.goal)
         reward = - (dis ** 2)
-        if  dis < 0.02:
-            reward = 1.0    
+        # if  dis < 0.02:
+        #     reward = 1.0    
         info = {}
         
         full_state =  np.concatenate((

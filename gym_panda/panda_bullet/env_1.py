@@ -11,7 +11,7 @@ class SimpleEnv():
     def __init__(self):
         # create simulation (GUI)
         self.urdfRootPath = pybullet_data.getDataPath()
-        p.connect(p.GUI)
+        p.connect(p.DIRECT)
         p.setGravity(0, 0, -9.81)
 
         # set up camera

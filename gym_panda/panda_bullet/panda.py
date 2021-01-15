@@ -3,8 +3,8 @@ import numpy as np
 import pybullet as p
 import pybullet_data
 
-FIXED_JOINT_NUMBER = 4
-JOINT_INDEX = [1, 3, 5, 7, 8]
+FIXED_JOINT_NUMBER = 0
+JOINT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 class Panda():
 
     def __init__(self, basePosition=[0,0,0]):
@@ -20,7 +20,8 @@ class Panda():
     def step(self, mode=1, djoint=[0]*7, dposition=[0]*3, dquaternion=[0]*4, grasp_open=True):
 
         # velocity control
-        self._velocity_control(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
+        # self._velocity_control(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
+        self. _direct_set(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
 
         # update robot state measurement
         self._read_state()
@@ -47,19 +48,19 @@ class Panda():
         ee_position = list(ee_states[4])
         ee_quaternion = list(ee_states[5])
         gripper_contact = p.getContactPoints(bodyA=self.panda, linkIndexA=10)
-        self.state['joint_position'] = np.asarray(joint_position)[JOINT_INDEX]
-        self.state['joint_velocity'] = np.asarray(joint_velocity)[JOINT_INDEX]
-        self.state['joint_torque'] = np.asarray(joint_torque)[JOINT_INDEX]
+        self.state['joint_position'] = np.asarray(joint_position) #[JOINT_INDEX]
+        self.state['joint_velocity'] = np.asarray(joint_velocity) #[JOINT_INDEX]
+        self.state['joint_torque'] = np.asarray(joint_torque) #[JOINT_INDEX]
         self.state['ee_position'] = np.asarray(ee_position)
         self.state['ee_quaternion'] = np.asarray(ee_quaternion)
         self.state['ee_euler'] = np.asarray(p.getEulerFromQuaternion(ee_quaternion))
         self.state['gripper_contact'] = len(gripper_contact) > 0
 
     def _read_jacobian(self):
-        linear_jacobian, angular_jacobian = p.calculateJacobian(self.panda, 11, [0, 0, 0], list(self.state['joint_position']), [0]*(9-FIXED_JOINT_NUMBER), [0]*(9-FIXED_JOINT_NUMBER))
-        linear_jacobian = np.asarray(linear_jacobian)[:,:5]
-        angular_jacobian = np.asarray(angular_jacobian)[:,:5]
-        full_jacobian = np.zeros((6,5))
+        linear_jacobian, angular_jacobian = p.calculateJacobian(self.panda, 11, [0, 0, 0], list(self.state['joint_position']), [0]*9, [0]*9)
+        linear_jacobian = np.asarray(linear_jacobian)[:,:7]
+        angular_jacobian = np.asarray(angular_jacobian)[:,:7]
+        full_jacobian = np.zeros((6,7))
         full_jacobian[0:3,:] = linear_jacobian
         full_jacobian[3:6,:] = angular_jacobian
         self.jacobian['full_jacobian'] = full_jacobian
@@ -95,3 +96,25 @@ class Panda():
             gripper_position = [0.05, 0.05]
         p.setJointMotorControlArray(self.panda, JOINT_INDEX, p.VELOCITY_CONTROL, targetVelocities=list(q_dot))
         p.setJointMotorControlArray(self.panda, [9,10], p.POSITION_CONTROL, targetPositions=gripper_position)
+
+    def _direct_set(self, mode, djoint, dposition, dquaternion, grasp_open):
+        if mode:
+            self.desired['ee_position'] += np.asarray(dposition) 
+            
+            
+            self.desired['ee_quaternion'] += np.asarray(dquaternion) 
+            #print(dquaternion,self.desired['ee_quaternion'],self.state['ee_quaternion'])
+
+            joint_position = list(self._inverse_kinematics(self.desired['ee_position'], self.desired['ee_quaternion']))
+            #print(joint_position,  self.state['joint_position'])
+        else:
+            self.desired['joint_position'] += np.asarray(djoint)
+            joint_position = list(self.desired['joint_position'])
+        gripper_position = [0.0, 0.0]
+        if grasp_open:
+            gripper_position = [0.05, 0.05]
+        for idx in range(len(joint_position)):
+            p.resetJointState(self.panda, idx, joint_position[idx])
+        
+       
+
