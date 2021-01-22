@@ -6,47 +6,47 @@ import torch
 import numpy as np
 import copy
 
-EPSILON = 0.01
+# EPSILON = 0.01
 
-class SkipStepsWrapper(gym.Wrapper):
-    """ Wrapper to use VAE output for rewards, with max episode length = 40000"""
-    def __init__(self, env):
-        gym.Wrapper.__init__(self, env)
-        self.env = env
-        self.time_step = 0
-        self.eps_len = 40000
+# class SkipStepsWrapper(gym.Wrapper):
+#     """ Wrapper to use VAE output for rewards, with max episode length = 40000"""
+#     def __init__(self, env):
+#         gym.Wrapper.__init__(self, env)
+#         self.env = env
+#         self.time_step = 0
+#         self.eps_len = 40000
 
-        self.model = VAE(3)
-        model_dict = torch.load('/home/jingjia/iliad/logs/models/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
-        self.model.load_state_dict(model_dict)
-        self.model.eval
+#         self.model = VAE(3)
+#         model_dict = torch.load('/home/jingjia/iliad/logs/models/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
+#         self.model.load_state_dict(model_dict)
+#         self.model.eval
 
-    def reset(self):
-        self.prev_state = self.env.reset()['ee_position']
-        self.expect_state = self.model.get_next_states(torch.FloatTensor(self.prev_state)).detach().numpy()
-        self.time_step = 0
-        return self.prev_state
-
-
-    def step(self, action):
-        self.env.step(action)
-        self.time_step += 1
-
-        done = (self.time_step > 400 * self.eps_len)
-        state = self.env.panda.state['ee_position']
-        dis = np.linalg.norm(state - self.expect_state)
-        if  dis < EPSILON:
-            # update expect state
-            self.prev_state = state
-            self.expect_state = self.model.get_next_states(torch.FloatTensor(self.prev_state)).detach().numpy()
-        reward = - dis
-        info = {}
-        self.prev_state = copy.deepcopy(state)
-        return state, reward, done, info
+#     def reset(self):
+#         self.prev_state = self.env.reset()['ee_position']
+#         self.expect_state = self.model.get_next_states(torch.FloatTensor(self.prev_state)).detach().numpy()
+#         self.time_step = 0
+#         return self.prev_state
 
 
-    def close(self):
-        self.env.close()
+#     def step(self, action):
+#         self.env.step(action)
+#         self.time_step += 1
+
+#         done = (self.time_step > 400 * self.eps_len)
+#         state = self.env.panda.state['ee_position']
+#         dis = np.linalg.norm(state - self.expect_state)
+#         if  dis < EPSILON:
+#             # update expect state
+#             self.prev_state = state
+#             self.expect_state = self.model.get_next_states(torch.FloatTensor(self.prev_state)).detach().numpy()
+#         reward = - dis
+#         info = {}
+#         self.prev_state = copy.deepcopy(state)
+#         return state, reward, done, info
+
+
+#     def close(self):
+#         self.env.close()
         
 class CircleExpert(object):
     """ Expert to draw a circle centered at (cx, cy) with a radius of 0.2."""
@@ -61,9 +61,9 @@ class CircleExpert(object):
         cur_pos = np.array([state[0] - self.cx, state[2] - self.cy])
         cur_the = np.arctan2(cur_pos[1], cur_pos[0])
         next_the = cur_the
-        if abs(np.sqrt(np.sum(np.square(cur_the))) - self.r) < EPSILON:
-            # if on the circle, move forward by one step
-            next_the += self.step
+        # if abs(np.sqrt(np.sum(np.square(cur_the))) - self.r) < EPSILON:
+        #     # if on the circle, move forward by one step
+        next_the += self.step
         next_pos = np.array([self.cx + self.r * np.cos(next_the), 0, self.cy + self.r * np.sin(next_the)])
         return next_pos
 
@@ -76,31 +76,48 @@ class SkipStepsWrapperNoVAE(gym.Wrapper):
         gym.Wrapper.__init__(self, env)
         self.env = env
         self.time_step = 0
-        self.eps_len = 40000
+        self.eps_len = 500
+        self.EPSILON = 0.02
         self.model = CircleExpert()
 
     def reset(self):
-        self.prev_state = self.env.reset()['ee_position']
+        # state = self.env.reset()['ee_position']
+        self.env.reset()
+        self.prev_state = self.env.panda.state['ee_position']
         self.expect_state = self.model.get_next_states(self.prev_state)
+        state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
         self.time_step = 0
-        return self.prev_state
+        return state
 
 
     def step(self, action):
         self.env.step(action)
         self.time_step += 1
 
-        done = (self.time_step > self.eps_len)
         state = self.env.panda.state['ee_position']
-        dis = np.linalg.norm(state - self.expect_state)
-        reward = - dis**2
-        if  dis < EPSILON:
-            self.prev_state = state
+        done = (self.time_step > self.eps_len)
+        dis = 10 * np.linalg.norm(state - self.expect_state)
+        reward = - (dis**2)
+        if  dis < self.EPSILON:
             self.expect_state = self.model.get_next_states(self.prev_state)
         info = {}
         self.prev_state = copy.deepcopy(state)
-        return state, reward, done, info
-  
+        full_state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
+        return full_state, reward, done, info
+
+
     def close(self):
         self.env.close()
 
@@ -109,19 +126,23 @@ class LineExpert(object):
     """ Drawing a line x = 0.45 and stay at any points with y >= 0.7."""
     def __init__(self, env=None):
         self.r = 0.4
-        self.step = 0.02
-        self.cx = 0.45
+        self.step = 0.05
+        self.ymax = 0.75
         # self.cy = 0.52
-
+        self.EPSILON = 0.05
     
     def get_next_states(self, state):
         cur_x = state[0]
         cur_y = state[2]
-        if (abs(cur_x - self.cx) < EPSILON) and (cur_y < 0.7):
-            next_pos = np.array([self.cx , 0, cur_y + self.step])
-        else:
-            next_pos = np.array([self.cx , 0, cur_y])        
+        # if (abs(cur_x - self.xstart) < self.EPSILON):
+        next_pos = np.array([self.xstart , 0, max(cur_y + self.step, self.ymax)])
+        # else:
+        #     next_pos = np.array([self.xstart , 0, self.ystart])        
         return next_pos
+    def set_start(self, state):
+        self.xstart = state[0]
+        self.ystart = state[2]
+    
 
 
 class SkipStepsWrapperNoVAELine(gym.Wrapper):
@@ -130,14 +151,24 @@ class SkipStepsWrapperNoVAELine(gym.Wrapper):
         gym.Wrapper.__init__(self, env)
         self.env = env
         self.time_step = 0
-        self.eps_len = 4000
+        self.eps_len = 500
+        self.EPSILON = 0.02
         self.model = LineExpert()
 
     def reset(self):
-        self.prev_state = self.env.reset()['ee_position']
+        # state = self.env.reset()['ee_position']
+        self.env.reset()
+        self.prev_state = self.env.panda.state['ee_position']
         self.expect_state = self.model.get_next_states(self.prev_state)
+        state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
         self.time_step = 0
-        return self.prev_state
+        return state
 
 
     def step(self, action):
@@ -146,14 +177,20 @@ class SkipStepsWrapperNoVAELine(gym.Wrapper):
 
         state = self.env.panda.state['ee_position']
         done = (self.time_step > self.eps_len)
-        dis = np.linalg.norm(state - self.expect_state)
-        reward = - dis**2
-        if  dis < EPSILON:
-            self.prev_state = state
+        dis = 10 * np.linalg.norm(state - self.expect_state)
+        reward = - (dis**2)
+        if  dis < self.EPSILON:
             self.expect_state = self.model.get_next_states(self.prev_state)
         info = {}
         self.prev_state = copy.deepcopy(state)
-        return state, reward, done, info
+        full_state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
+        return full_state, reward, done, info
 
 
     def close(self):
@@ -183,8 +220,12 @@ class SkipStepsWrapperNoVAEPoint(gym.Wrapper):
         return state
 
 
-    def step(self, action):
-        self.env.step(action)
+    def step(self, action, expert=False):
+        if expert:
+            self.env.step(action, mode=1)
+        else:
+            self.env.step(action)
+
         self.time_step += 1
 
         state = self.env.panda.state['ee_position']

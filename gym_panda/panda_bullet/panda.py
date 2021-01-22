@@ -99,16 +99,16 @@ class Panda():
 
     def _direct_set(self, mode, djoint, dposition, dquaternion, grasp_open):
         if mode:
-            self.desired['ee_position'] += np.asarray(dposition) 
+            self.desired['ee_position'] = self.state['ee_position'] + np.asarray(dposition) 
             
             
-            self.desired['ee_quaternion'] += np.asarray(dquaternion) 
+            self.desired['ee_quaternion'] = self.state['ee_quaternion'] + np.asarray(dquaternion) 
             #print(dquaternion,self.desired['ee_quaternion'],self.state['ee_quaternion'])
 
             joint_position = list(self._inverse_kinematics(self.desired['ee_position'], self.desired['ee_quaternion']))
             #print(joint_position,  self.state['joint_position'])
         else:
-            self.desired['joint_position'] += np.asarray(djoint)
+            self.desired['joint_position'] = self.state['joint_position'] + np.asarray(djoint)
             joint_position = list(self.desired['joint_position'])
         gripper_position = [0.0, 0.0]
         if grasp_open:
