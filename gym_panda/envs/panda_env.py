@@ -14,7 +14,7 @@ class PandaEnv(gym.Env):
   def __init__(self):
     # create simulation (GUI)
     self.urdfRootPath = pybullet_data.getDataPath()
-    p.connect(p.DIRECT)
+    p.connect(p.GUI)
     p.setGravity(0, 0, -9.81)
 
     # set up camera

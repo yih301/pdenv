@@ -105,7 +105,7 @@ class SkipStepsWrapperNoVAE(gym.Wrapper):
         dis = 10 * np.linalg.norm(state - self.expect_state)
         reward = - (dis**2)
         if  dis < self.EPSILON:
-            self.expect_state = self.model.get_next_states(self.prev_state)
+            self.expect_state = self.model.get_next_states(state)
         info = {}
         self.prev_state = copy.deepcopy(state)
         full_state =  np.concatenate((
@@ -158,6 +158,7 @@ class SkipStepsWrapperNoVAELine(gym.Wrapper):
     def reset(self):
         # state = self.env.reset()['ee_position']
         self.env.reset()
+        self.model.set_start(self.env.panda.state['ee_position'])
         self.prev_state = self.env.panda.state['ee_position']
         self.expect_state = self.model.get_next_states(self.prev_state)
         state =  np.concatenate((
@@ -176,13 +177,6 @@ class SkipStepsWrapperNoVAELine(gym.Wrapper):
         self.time_step += 1
 
         state = self.env.panda.state['ee_position']
-        done = (self.time_step > self.eps_len)
-        dis = 10 * np.linalg.norm(state - self.expect_state)
-        reward = - (dis**2)
-        if  dis < self.EPSILON:
-            self.expect_state = self.model.get_next_states(self.prev_state)
-        info = {}
-        self.prev_state = copy.deepcopy(state)
         full_state =  np.concatenate((
             self.env.panda.state['joint_position'],# 5
             self.env.panda.state['joint_velocity'],# 5
@@ -190,6 +184,16 @@ class SkipStepsWrapperNoVAELine(gym.Wrapper):
             self.env.panda.state['ee_position'],# 3
             self.env.panda.state['ee_euler'], # 3
             ), axis=None)
+        
+        done = (self.time_step > self.eps_len)
+        dis = 10 * np.linalg.norm(state - self.expect_state)
+        reward = - (dis**2)
+        if  dis < self.EPSILON:
+            print("GOOD")
+            self.expect_state = self.model.get_next_states(state)
+        info = {}
+        self.prev_state = copy.deepcopy(state)
+        
         return full_state, reward, done, info
 
 
