@@ -52,7 +52,7 @@ class CircleExpert(object):
     """ Expert to draw a circle centered at (cx, cy) with a radius of 0.2."""
     def __init__(self, env=None):
         self.r = 0.2
-        self.step = 0.1 * np.pi
+        self.step = 0.1 * np.pi #0.2 * np.pi
         self.cx = 0.35
         self.cy = 0.52
 
@@ -104,8 +104,8 @@ class SkipStepsWrapperNoVAE(gym.Wrapper):
         done = (self.time_step > self.eps_len)
         dis = 10 * np.linalg.norm(state - self.expect_state)
         reward = - (dis**2)
-        if  dis < self.EPSILON:
-            self.expect_state = self.model.get_next_states(state)
+        #if  dis < 10 * self.EPSILON:
+        self.expect_state = self.model.get_next_states(state)
         info = {}
         self.prev_state = copy.deepcopy(state)
         full_state =  np.concatenate((
