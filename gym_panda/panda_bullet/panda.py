@@ -8,6 +8,7 @@ JOINT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 class Panda():
 
     def __init__(self, basePosition=[0,0,0]):
+        # self.urdfRootPath = '/home/jingjia/iliad/gym_panda/gym_panda/panda_bullet/assets'
         self.urdfRootPath = '/iliad/u/jingjia/multi_agent/gym_panda/gym_panda/panda_bullet/assets' #pybullet_data.getDataPath()
         self.panda = p.loadURDF(os.path.join(self.urdfRootPath,"franka_panda/panda.urdf"),useFixedBase=True,basePosition=basePosition)
 

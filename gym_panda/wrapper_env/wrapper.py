@@ -47,6 +47,71 @@ import copy
 
 #     def close(self):
 #         self.env.close()
+
+class CircleVAEExpert():
+    def __init__(self):
+        self.model = VAE(3)
+        # model_dict = torch.load('/home/jingjia/iliad/logs/data/0206/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
+        model_dict = torch.load('/iliad/u/jingjia/multi_agent/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
+        self.model.load_state_dict(model_dict)
+        self.model.eval
+
+    def get_next_states(self, state):
+        expect_state = self.model.get_next_states(torch.FloatTensor(state)).detach().numpy()
+        expect_state[1]=0
+        return expect_state
+
+
+class SkipStepsWrapperVAE(gym.Wrapper):
+    """ Wrapper to use CircleExpert for rewards, with max episode length = 40000."""
+    def __init__(self, env):
+        gym.Wrapper.__init__(self, env)
+        self.env = env
+        self.time_step = 0
+        self.eps_len = 2000
+        self.EPSILON = 0.02
+        self.model = CircleVAEExpert()
+
+    def reset(self):
+        # state = self.env.reset()['ee_position']
+        self.env.reset()
+        self.prev_state = self.env.panda.state['ee_position']
+        self.expect_state = self.model.get_next_states(self.prev_state)
+        state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
+        self.time_step = 0
+        return state
+
+
+    def step(self, action):
+        self.env.step(action)
+        self.time_step += 1
+
+        state = self.env.panda.state['ee_position']
+        done = (self.time_step > self.eps_len)
+        dis = 10 * np.linalg.norm(state - self.expect_state)
+        reward = - (dis**2)
+        #if  dis < 10 * self.EPSILON:
+        self.expect_state = self.model.get_next_states(state)
+        info = {}
+        self.prev_state = copy.deepcopy(state)
+        full_state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
+        return full_state, reward, done, info
+
+
+    def close(self):
+        self.env.close()
         
 class CircleExpert(object):
     """ Expert to draw a circle centered at (cx, cy) with a radius of 0.2."""
