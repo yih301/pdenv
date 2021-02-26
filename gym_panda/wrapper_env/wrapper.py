@@ -5,6 +5,7 @@ from gym_panda.wrapper_env.VAE import VAE
 import torch
 import numpy as np
 import copy
+import pickle
 
 # EPSILON = 0.01
 
@@ -51,8 +52,8 @@ import copy
 class CircleVAEExpert():
     def __init__(self):
         self.model = VAE(3)
-        # model_dict = torch.load('/home/jingjia/iliad/logs/data/0206/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
-        model_dict = torch.load('/iliad/u/jingjia/multi_agent/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
+        model_dict = torch.load('/home/jingjia/iliad/logs/data/0206/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
+        # model_dict = torch.load('/iliad/u/jingjia/multi_agent/pandaenv-random-v0_0.005_vae.pt', map_location='cpu')
         self.model.load_state_dict(model_dict)
         self.model.eval
 
@@ -132,6 +133,52 @@ class CircleExpert(object):
         next_pos = np.array([self.cx + self.r * np.cos(next_the), 0, self.cy + self.r * np.sin(next_the)])
         return next_pos
 
+
+class infeasibleWrapper(gym.Wrapper):
+    def __init__(self, env):
+        gym.Wrapper.__init__(self, env)
+        self.env = env
+        self.time_step = 0
+        self.eps_len = 400
+        self.gt =  pickle.load(open('/iliad/u/jingjia/multi_agent/gym_panda/gym_panda/panda_bullet/infeasible_traj_1.pkl', 'rb'))
+
+    def reset(self):
+        # state = self.env.reset()['ee_position']
+        self.env.reset()
+        state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
+        self.time_step = 0
+        return state
+
+
+    def step(self, action):
+        self.env.step(action)
+        
+
+        state = self.env.panda.state['ee_position']
+        done = (self.time_step >= self.eps_len - 1)
+        dis = 10 * np.linalg.norm(state - self.gt[self.time_step,:])
+        reward = - (dis**2)
+        info = {}
+        self.prev_state = copy.deepcopy(state)
+        full_state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 5
+            self.env.panda.state['joint_velocity'],# 5
+            self.env.panda.state['joint_torque'],# 5
+            self.env.panda.state['ee_position'],# 3
+            self.env.panda.state['ee_euler'], # 3
+            ), axis=None)
+        self.time_step += 1
+        return full_state, reward, done, info
+
+
+    def close(self):
+        self.env.close()
 
 
 

@@ -107,6 +107,10 @@ class Panda():
             #print(dquaternion,self.desired['ee_quaternion'],self.state['ee_quaternion'])
 
             joint_position = list(self._inverse_kinematics(self.desired['ee_position'], self.desired['ee_quaternion']))
+            
+            djoint = (joint_position - self.state['joint_position'])
+            djoint = np.clip(djoint, -1e-3, 1e-3)
+            joint_position = djoint+ self.state['joint_position']
             #print(joint_position,  self.state['joint_position'])
         else:
             self.desired['joint_position'] = self.state['joint_position'] + np.asarray(djoint)
@@ -114,7 +118,10 @@ class Panda():
         gripper_position = [0.0, 0.0]
         if grasp_open:
             gripper_position = [0.05, 0.05]
+        disabled_joint_idx = [0, 2, 4, 6]
         for idx in range(len(joint_position)):
+            if idx  in disabled_joint_idx:
+                continue
             p.resetJointState(self.panda, idx, joint_position[idx])
         
        
