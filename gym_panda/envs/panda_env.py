@@ -30,7 +30,7 @@ class PandaEnv(gym.Env):
     # obj1.load()
     # p.resetBasePositionAndOrientation(obj1.body_id, [0.7, -0.2, 0.1], [0, 0, 0, 1])
 
-    self.n = 9 #9 #9
+    self.n = 9 # 3
     self.action_space = spaces.Box(low=-1.0, high=+1.0, shape=(self.n, ), dtype=np.float32)
     self.observation_space = spaces.Box(low=-np.inf, high=+np.inf, shape=(33,), dtype=np.float32)
 
@@ -45,6 +45,9 @@ class PandaEnv(gym.Env):
     p.disconnect()
 
   def step(self, action, mode=0):
+    """ mode = 1, controlling by end effector dposition
+        mode = 0, controlling by joint action
+    """
     # get current state
     state = self.panda.state
     

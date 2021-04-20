@@ -99,6 +99,7 @@ class Panda():
         p.setJointMotorControlArray(self.panda, [9,10], p.POSITION_CONTROL, targetPositions=gripper_position)
 
     def _direct_set(self, mode, djoint, dposition, dquaternion, grasp_open):
+        """ Direct set the joints."""
         if mode:
             self.desired['ee_position'] = self.state['ee_position'] + np.asarray(dposition) 
             
@@ -119,12 +120,14 @@ class Panda():
         if grasp_open:
             gripper_position = [0.05, 0.05]
         disabled_joint_idx = [0, 2, 4, 6]
+        
         for idx in range(len(joint_position)):
             if idx  in disabled_joint_idx:
                 continue
             p.resetJointState(self.panda, idx, joint_position[idx])
         
     def _set_start(self,position):
+        """ Set start positions."""
         self.desired['ee_position'] = np.asarray(position)             
             
         self.desired['ee_quaternion'] = self.state['ee_quaternion']

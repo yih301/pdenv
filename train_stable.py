@@ -22,9 +22,6 @@ from stable_baselines.ddpg.policies import MlpPolicy as ddpg_MlpPolicy
 from stable_baselines.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise, AdaptiveParamNoiseSpec
 from datetime import datetime
 
-
-num_agents = 4
-
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
     Callback for saving a model (the check is done every ``check_freq`` steps)
@@ -84,10 +81,10 @@ if __name__ == "__main__":
     # make env
     env_name = "panda-v0"
     env = gym.make(env_name)
-    env = SkipStepsWrapperNoVAEPoint(env)
+    env = SkipStepsWrapperVAE(env)
 
     # Create log dir
-    log_dir = "/home/jingjia/iliad/logs/models/sb-trpo-joint-{}/".format(datetime.now().strftime("%Y-%m-%d"))
+    log_dir = "/home/jingjia/iliad/logs/models/sb-trpo-joint-target-diffdynamics-{}/".format(datetime.now().strftime("%Y-%m-%d"))
     tensorboard_dir = "/home/jingjia/iliad/logs/logs"
     os.makedirs(tensorboard_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
