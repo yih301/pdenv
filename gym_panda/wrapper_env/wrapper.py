@@ -133,18 +133,80 @@ class CircleExpert(object):
         next_pos = np.array([self.cx + self.r * np.cos(next_the), 0, self.cy + self.r * np.sin(next_the)])
         return next_pos
 
+class collectDemonsWrapper(gym.Wrapper):
+    def __init__(self, env):
+        gym.Wrapper.__init__(self, env)
+        self.env = env
+        self.time_step = 0
+        self.eps_len = 500
+        
+
+    def _random_reset(self):
+        # random pick start pos
+        theta = np.random.uniform(low=0.0, high=2*np.pi)
+        phi = np.random.uniform(low=0.0, high=2*np.pi)
+        r = np.random.uniform(low=0.1, high=0.1)
+        dpos = [0.6+r*np.sin(theta)*np.cos(phi),r*np.sin(theta)*np.sin(phi),0.5+r*np.cos(theta)]
+        self.env.panda._set_start(position=dpos)
+
+    def reset(self):
+        # state = self.env.reset()['ee_position']
+        self.env.reset()
+        self._random_reset()
+
+        state = self.env.panda.state['ee_position']
+        self.time_step = 0
+        
+        return state
+
+
+    def step(self, action, mode):
+        self.env.step(action, mode=mode)       
+
+        state = self.env.panda.state['ee_position']
+        self.time_step += 1
+        done = (self.time_step >= self.eps_len - 1)
+        reward = 0
+        info = {}
+        self.prev_state = copy.deepcopy(state)
+        
+        return state, reward, done, info
+
+
+    def close(self):
+        self.env.close()
+
 
 class infeasibleWrapper(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
         self.env = env
         self.time_step = 0
-        self.eps_len = 400
-        self.gt =  pickle.load(open('/iliad/u/jingjia/multi_agent/gym_panda/gym_panda/panda_bullet/infeasible_traj_1.pkl', 'rb'))
+        self.eps_len = 500
+        self.gt_data =  pickle.load(open('/home/jingjia/iliad/logs/data/infeasible_traj_3.pkl', 'rb'))
+        
+        # self.gt =  pickle.load(open('/iliad/u/jingjia/multi_agent/gym_panda/gym_panda/panda_bullet/infeasible_traj_1.pkl', 'rb'))
 
-    def reset(self):
+    def _random_select(self, state, idx=None):
+        # random pick start pos
+        if idx is None:
+            self.gt_num = np.random.choice(self.gt_data.shape[0])
+        else:
+            self.gt_num = idx
+        self.gt = self.gt_data[self.gt_num, :, :]
+       
+        pos = self.gt[0, :]
+        # pos[1] = 0
+        self.env.panda._set_start(position=pos)
+        print(self.env.panda.state['ee_position'], pos)
+
+    def reset(self,idx=None):
         # state = self.env.reset()['ee_position']
+        
         self.env.reset()
+        state = self.env.panda.state['ee_position']
+        self._random_select(state,idx)
+
         state =  np.concatenate((
             self.env.panda.state['joint_position'],# 5
             self.env.panda.state['joint_velocity'],# 5
@@ -153,14 +215,15 @@ class infeasibleWrapper(gym.Wrapper):
             self.env.panda.state['ee_euler'], # 3
             ), axis=None)
         self.time_step = 0
+        
         return state
 
 
     def step(self, action):
-        self.env.step(action)
-        
+        self.env.step(action)       
 
         state = self.env.panda.state['ee_position']
+        self.time_step += 1
         done = (self.time_step >= self.eps_len - 1)
         dis = 10 * np.linalg.norm(state - self.gt[self.time_step,:])
         reward = - (dis**2)
@@ -173,7 +236,8 @@ class infeasibleWrapper(gym.Wrapper):
             self.env.panda.state['ee_position'],# 3
             self.env.panda.state['ee_euler'], # 3
             ), axis=None)
-        self.time_step += 1
+        info['dis'] = dis/10;
+        
         return full_state, reward, done, info
 
 

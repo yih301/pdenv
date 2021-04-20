@@ -8,8 +8,8 @@ JOINT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 class Panda():
 
     def __init__(self, basePosition=[0,0,0]):
-        # self.urdfRootPath = '/home/jingjia/iliad/gym_panda/gym_panda/panda_bullet/assets'
-        self.urdfRootPath = '/iliad/u/jingjia/multi_agent/gym_panda/gym_panda/panda_bullet/assets' #pybullet_data.getDataPath()
+        self.urdfRootPath = '/home/jingjia/iliad/gym_panda/gym_panda/panda_bullet/assets'
+        # self.urdfRootPath = '/iliad/u/jingjia/multi_agent/gym_panda/gym_panda/panda_bullet/assets' #pybullet_data.getDataPath()
         self.panda = p.loadURDF(os.path.join(self.urdfRootPath,"franka_panda/panda.urdf"),useFixedBase=True,basePosition=basePosition)
 
     """functions that environment should use"""
@@ -124,5 +124,22 @@ class Panda():
                 continue
             p.resetJointState(self.panda, idx, joint_position[idx])
         
+    def _set_start(self,position):
+        self.desired['ee_position'] = np.asarray(position)             
+            
+        self.desired['ee_quaternion'] = self.state['ee_quaternion']
+        #print(dquaternion,self.desired['ee_quaternion'],self.state['ee_quaternion'])
+
+        joint_position = list(self._inverse_kinematics(self.desired['ee_position'], self.desired['ee_quaternion']))
+        
+        djoint = (joint_position - self.state['joint_position'])
+        joint_position = djoint + self.state['joint_position']
+       
+        for idx in range(len(joint_position)):
+            p.resetJointState(self.panda, idx, joint_position[idx])
+        self._read_state()
+        self._read_jacobian()
+
+
        
 
