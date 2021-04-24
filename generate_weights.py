@@ -57,7 +57,7 @@ def generate_weight(MODEL_PATH, DEMONS_PATH, SAVE_PATH):
             
 
 if __name__ == "__main__":
-    generate_weight('/home/jingjia/iliad/logs/models/sb-trpo-joint-target-diffdynamics-2021-04-10/best_model.zip', 
-                    '/home/jingjia/iliad/logs/data/infeasible_traj_3.pkl',
-                    '/home/jingjia/iliad/logs/data/infeasible_traj_3_with_weights.pkl')
+    generate_weight('/iliad/u/yilunhao/logs/models/sb-trpo-joint-target-diffdynamics-2021-04-10/best_model.zip', 
+                    '/iliad/u/yilunhao/logs/data/infeasible_traj_3.pkl',
+                    '/iliad/u/yilunhao/logs/data/infeasible_traj_3_with_weights.pkl')
 

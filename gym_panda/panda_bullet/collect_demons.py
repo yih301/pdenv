@@ -15,7 +15,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
-log_dir = '/home/jingjia/iliad/logs/data/'
+log_dir = '/iliad/u/yilunhao/logs/data/'
 
 class CircleExpert(object):
     """ Expert to draw a circle centered at (cx, cy) with a radius of 0.2."""
