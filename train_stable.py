@@ -84,8 +84,9 @@ if __name__ == "__main__":
     env = SkipStepsWrapperVAE(env)
 
     # Create log dir
-    log_dir = "/iliad/u/yilunhao/logs/models/sb-trpo-joint-target-diffdynamics-{}/".format(datetime.now().strftime("%Y-%m-%d"))
-    tensorboard_dir = "/iliad/u/yilunhao/logs/logs"
+    #log_dir = "/iliad/u/yilunhao/logs/models/sb-trpo-joint-target-diffdynamics-{}/".format(datetime.now().strftime("%Y-%m-%d"))
+    log_dir = "../logs/models/sb-trpo-joint-target-diffdynamics-{}/".format(datetime.now().strftime("%Y-%m-%d"))
+    tensorboard_dir = "../logs/logs"
     os.makedirs(tensorboard_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
 

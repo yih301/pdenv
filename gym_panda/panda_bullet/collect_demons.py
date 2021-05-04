@@ -1,9 +1,14 @@
 import argparse
 import sys
 import os
+import inspect
 
 import gym
 from gym import wrappers, logger
+'''current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir) 
+from wrapper_env.wrapper import collectDemonsWrapper, infeasibleWrapper'''
 import gym_panda
 from gym_panda.wrapper_env.wrapper import collectDemonsWrapper, infeasibleWrapper
 import time
@@ -15,7 +20,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
-log_dir = '/iliad/u/yilunhao/logs/data/'
+log_dir = '../../../logs/data/'
 
 class CircleExpert(object):
     """ Expert to draw a circle centered at (cx, cy) with a radius of 0.2."""

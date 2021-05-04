@@ -55,7 +55,7 @@ class infeasibleWrapper(gym.Wrapper):
         self.env = env
         self.time_step = 0
         self.eps_len = 500
-        self.gt_data =  pickle.load(open('/iliad/u/yilunhao/logs/data/infeasible_traj_3.pkl', 'rb'))
+        self.gt_data =  pickle.load(open('../logs/data/infeasible_traj_3.pkl', 'rb'))
         
 
     def _random_select(self, state, idx=None):
@@ -128,7 +128,11 @@ class infeasibleVAEExpert():
 class SkipStepsWrapperVAE(gym.Wrapper):
     """ Wrapper to use CircleExpert for rewards, with max episode length = 40000."""
     def __init__(self, env):
-        gym.Wrapper.__init__(self, env, vae_path='/iliad/u/yilunhao/logs/data/pandaenv-random-v0_0.005_vae.pt')
+        gym.Wrapper.__init__(self, env)
+        #gym.Wrapper.__init__ does not have (self, env, path) so I pull it out
+        #vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\pandaenv-random-v0_0.005_vae.pt'
+        #need to change path to run in cluster
+        vae_path = '/iliad/u/yilunhao/logs/pandaenv-random-v0_0.005_vae.pt'
         self.env = env
         self.time_step = 0
         self.eps_len = 500 # TODO: tune it for different task (circle, sin, or infeasible).
