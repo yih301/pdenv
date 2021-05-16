@@ -20,7 +20,8 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
-log_dir = '../../../logs/data/'
+log_dir = 'C:\\Users\\Yilun\\Desktop\\Robot\\logs\\data'
+#log_dir = '/iliad/u/yilunhao/logs/data'   #uncomment this when running in cluster
 
 class CircleExpert(object):
     """ Expert to draw a circle centered at (cx, cy) with a radius of 0.2."""

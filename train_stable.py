@@ -82,6 +82,7 @@ if __name__ == "__main__":
     env_name = "panda-v0"
     env = gym.make(env_name)
     env = SkipStepsWrapperVAE(env)
+    #env = infeasibleWrapper(env)
 
     # Create log dir
     #log_dir = "/iliad/u/yilunhao/logs/models/sb-trpo-joint-target-diffdynamics-{}/".format(datetime.now().strftime("%Y-%m-%d"))

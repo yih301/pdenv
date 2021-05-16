@@ -1,6 +1,7 @@
 import os
 import pybullet as p
 import numpy as np
+import pdb
 
 
 class Object(object):
@@ -38,13 +39,15 @@ class Object(object):
 class YCBObject(Object):
     def __init__(self, name, scale=1):
         super(YCBObject, self).__init__()
-        self.visual_filename = os.path.join('assets', 'ycb', name,
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        self.visual_filename = os.path.join(current_path,'assets', 'ycb', name,
                                             'textured_simple.obj')
-        self.collision_filename = os.path.join('assets', 'ycb', name,
+        self.collision_filename = os.path.join(current_path,'assets', 'ycb', name,
                                                'textured_simple_vhacd.obj')
         self.scale = scale
 
     def _load(self):
+        #pdb.set_trace()
         collision_id = p.createCollisionShape(p.GEOM_MESH,
                                               fileName=self.collision_filename,
                                               meshScale=self.scale)

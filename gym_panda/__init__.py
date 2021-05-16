@@ -8,3 +8,8 @@ register(
     id='panda-v0',
     entry_point='gym_panda.envs:PandaEnv',
 )
+
+register(
+    id='disabledpanda-v0',
+    entry_point='gym_panda.envs:DisabledPandaEnv',
+)

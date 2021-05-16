@@ -6,6 +6,7 @@ import torch
 import numpy as np
 import copy
 import pickle
+import time
 
 class collectDemonsWrapper(gym.Wrapper):
     """ Wrapper used to collect demonstrations."""
@@ -13,7 +14,7 @@ class collectDemonsWrapper(gym.Wrapper):
         gym.Wrapper.__init__(self, env)
         self.env = env
         self.time_step = 0
-        self.eps_len = 500
+        self.eps_len = 8000
         
 
     def _random_reset(self):
@@ -23,23 +24,28 @@ class collectDemonsWrapper(gym.Wrapper):
         theta = np.random.uniform(low=0.0, high=2*np.pi)
         phi = np.random.uniform(low=0.0, high=2*np.pi)
         r = np.random.uniform(low=0.1, high=0.1)
-        dpos = [0.6+r*np.sin(theta)*np.cos(phi),r*np.sin(theta)*np.sin(phi),0.5+r*np.cos(theta)]
+        dpos = [0.15+r*np.sin(theta)*np.cos(phi),r*np.sin(theta)*np.sin(phi),0.2+r*np.cos(theta)]
         self.env.panda._set_start(position=dpos)
 
     def reset(self):
         self.env.reset()
-        self._random_reset()
+        #self._random_reset()
+        #self.env.resetobj()
         state = self.env.panda.state['ee_position']
+        print(state)
         self.time_step = 0
         return state
 
 
-    def step(self, action, mode):
-        self.env.step(action, mode=mode)       
+    def step(self, action):
+        #time.sleep(0.05)
+        #print("wrapper")
+        self.env.step(action)       
         state = self.env.panda.state['ee_position']
         self.time_step += 1
         self.prev_state = copy.deepcopy(state)
-        done = (self.time_step >= self.eps_len - 1)
+        done = (self.time_step >= self.eps_len - 1) or np.linalg.norm(np.array([state[0] - 0.81, state[2] - 0.1])) < 0.028
+        #done = False
         reward = 0
         info = {}      
         return state, reward, done, info
@@ -55,7 +61,7 @@ class infeasibleWrapper(gym.Wrapper):
         self.env = env
         self.time_step = 0
         self.eps_len = 500
-        self.gt_data =  pickle.load(open('../logs/data/infeasible_traj_3.pkl', 'rb'))
+        self.gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_demons.pkl', 'rb'))
         
 
     def _random_select(self, state, idx=None):
@@ -105,7 +111,7 @@ class infeasibleWrapper(gym.Wrapper):
             self.env.panda.state['ee_position'],# 3
             self.env.panda.state['ee_euler'], # 3
             ), axis=None)
-        info['dis'] = dis/10;
+        info['dis'] = dis/10
         
         return full_state, reward, done, info
 
@@ -115,7 +121,7 @@ class infeasibleWrapper(gym.Wrapper):
 
 class infeasibleVAEExpert():
     def __init__(self, vae_path):
-        self.model = VAE(3)
+        self.model = VAE(12)
         model_dict = torch.load(vae_path, map_location='cpu')
         self.model.load_state_dict(model_dict)
         self.model.eval
@@ -130,9 +136,9 @@ class SkipStepsWrapperVAE(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
         #gym.Wrapper.__init__ does not have (self, env, path) so I pull it out
-        #vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\pandaenv-random-v0_0.005_vae.pt'
+        vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\pandaenv-random-v0_0.005_vae.pt'
         #need to change path to run in cluster
-        vae_path = '/iliad/u/yilunhao/logs/pandaenv-random-v0_0.005_vae.pt'
+        #vae_path = '/iliad/u/yilunhao/logs/pandaenv-random-v0_0.005_vae.pt'
         self.env = env
         self.time_step = 0
         self.eps_len = 500 # TODO: tune it for different task (circle, sin, or infeasible).

@@ -2,15 +2,20 @@ import os
 import numpy as np
 import pybullet as p
 import pybullet_data
+import copy
+
 
 FIXED_JOINT_NUMBER = 0
 JOINT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 class Panda():
 
     def __init__(self, basePosition=[0,0,0]):
+        self.init_pos = [0.0, -0.5, 0.0, -2*np.pi/4-1.5, 0.0, np.pi/2+1.0, np.pi/4, 0.0, 0.0, 0.03, 0.03]
         self.urdfRootPath="C:\\Users\\Yilun\\Desktop\\Robot\\pdenv\\gym_panda\\panda_bullet\\assets"
         #self.urdfRootPath = '/iliad/u/yilunhao/pdenv/gym_panda/gym_panda/panda_bullet/assets' #pybullet_data.getDataPath()
         self.panda = p.loadURDF(os.path.join(self.urdfRootPath,"franka_panda","panda.urdf"),useFixedBase=True,basePosition=basePosition)
+        self.status = "abled"
+
 
     """functions that environment should use"""
 
@@ -21,8 +26,8 @@ class Panda():
     def step(self, mode=1, djoint=[0]*7, dposition=[0]*3, dquaternion=[0]*4, grasp_open=True):
 
         # velocity control
-        # self._velocity_control(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
-        self. _direct_set(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
+        self._velocity_control(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
+        #self. _direct_set(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
 
         # update robot state measurement
         self._read_state()
@@ -30,7 +35,16 @@ class Panda():
 
 
     def reset(self):
-        init_pos = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.05, 0.05]
+        init_pos = copy.deepcopy(self.init_pos)
+        #init_pos = [0.0, np.pi/3, 0.0, -1*np.pi/3, 0.0, 2*np.pi/3, 3*np.pi/4, 0.0, 0.0, 0.03, 0.03]
+        random_number = np.random.uniform(low=-.1, high=.1, size=len(init_pos)) * 0.5
+        print(self.status)
+        if(self.status == "disabled"):
+            resetpos = [1,3,5]
+        else:
+            resetpos = [0,1,2,3,4,5]
+        for i in resetpos:
+            init_pos[i] += random_number[i]
         self._reset_robot(init_pos)
 
 
@@ -143,6 +157,13 @@ class Panda():
         self._read_state()
         self._read_jacobian()
 
-
+class DisabledPanda(Panda):
+    def __init__(self, basePosition=[0,0,0]):
+        self.urdfRootPath = pybullet_data.getDataPath()
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        self.panda = p.loadURDF(os.path.join(current_path, "disabled_panda/disabled_panda.urdf"),useFixedBase=True,basePosition=basePosition)
+        #self.init_pos = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.05, 0.05]
+        self.init_pos = [0.0, -0.5, 0.0, -2*np.pi/4-1.5, 0.0, np.pi/2+1.0, np.pi/4, 0.0, 0.0, 0.03, 0.03]
+        self.status = "disabled"
        
 

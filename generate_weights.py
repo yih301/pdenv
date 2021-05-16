@@ -1,7 +1,7 @@
 import os
 
 import gym
-import gym_circle_move
+#import gym_circle_move
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -57,7 +57,7 @@ def generate_weight(MODEL_PATH, DEMONS_PATH, SAVE_PATH):
             
 
 if __name__ == "__main__":
-    generate_weight('../logs/models/sb-trpo-joint-target-diffdynamics-2021-04-10/best_model.zip', 
-                    '../logs/data/infeasible_traj_3.pkl',
-                    '..//logs/data/infeasible_traj_3_with_weights.pkl')
+    generate_weight('..\\logs\\models\\sb-trpo-joint-target-diffdynamics-2021-05-11/best_model.zip', 
+                    '..\\logs\\data\\infeasible_traj_demons.pkl',
+                    '..\\logs\\data\\infeasible_traj_demons_with_weights.pkl')
 
