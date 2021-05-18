@@ -9,14 +9,13 @@ import pybullet as p
 import pybullet_data
 import pdb
 
-
 class PandaEnv(gym.Env):
   metadata = {'render.modes': ['human']}
   def __init__(self, panda_type=Panda):
     # create simulation (GUI)
     self.urdfRootPath = pybullet_data.getDataPath()
-    p.connect(p.DIRECT)
-    #p.connect(p.GUI)
+    #p.connect(p.DIRECT)
+    p.connect(p.GUI)
     p.setGravity(0, 0, -9.81)
 
     # set up camera
@@ -85,7 +84,9 @@ class PandaEnv(gym.Env):
     # return next_state, reward, done, info
     next_state = self.panda.state
     reward = 0.0
-    done = False
+    state = next_state['ee_position']
+    done = np.linalg.norm(np.array([state[0] - 0.81, state[1],state[2] - 0.1])) < 0.028
+    #done=False
     info = {}
     return next_state, reward, done, info
 

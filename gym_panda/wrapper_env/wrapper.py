@@ -121,14 +121,29 @@ class infeasibleWrapper(gym.Wrapper):
 
 class infeasibleVAEExpert():
     def __init__(self, vae_path):
-        self.model = VAE(12)
+        print("wrapper")
+        self.model = VAE(3)
         model_dict = torch.load(vae_path, map_location='cpu')
         self.model.load_state_dict(model_dict)
         self.model.eval
+        self.time_step = 0
+        self.eps_len = 8000
 
     def get_next_states(self, state):
         expect_state = self.model.get_next_states(torch.FloatTensor(state)).detach().numpy()
         return expect_state
+    
+    '''def step(self, action):
+        print("step")
+        self.env.step(action)       
+        state = self.env.panda.state['ee_position']
+        self.time_step += 1
+        self.prev_state = copy.deepcopy(state)
+        print(np.linalg.norm(np.array([state[0] - 0.81, state[2] - 0.1])))
+        done = (self.time_step >= self.eps_len - 1) or np.linalg.norm(np.array([state[0] - 0.81, state[2] - 0.1])) < 0.028
+        reward = 0
+        info = {}      
+        return state, reward, done, info'''
 
 
 class SkipStepsWrapperVAE(gym.Wrapper):

@@ -128,7 +128,7 @@ class CrossBlockExpert(object):
     #pdb.set_trace()
     self.ierror += dpos
  
-    return next_pos,[target_point, target_point2, target_point3]
+    return next_pos
 
 class CrossBlockExpertNormal(object):
   """Expert to across a block from one side to another side.""" 
@@ -137,13 +137,28 @@ class CrossBlockExpertNormal(object):
     self.kd = 0
     self.ierror = np.zeros(3)
     self.obj_len = 0.15
-    if(np.random.random()<0.49):
-      self.yvalue = np.random.randint(15,33)/100
-    elif(np.random.random()<0.98):
-      self.yvalue = np.random.randint(15,33)/100*-1
+    if(state[1]>0.0005 and state[2] <0.135): #left down
+      self.yvalue = np.random.randint(15,30)/100
+      #self.zvalue = np.random.randint(10,15)/100
+      self.zvalue = state[2]
+    elif(state[1]<-0.0005 and state[2]<0.135): #right down
+      self.yvalue = np.random.randint(15,30)/100*-1
+      #self.zvalue = np.random.randint(10,15)/100
+      self.zvalue = state[2]
+    elif(state[1]>0.0015 and state[2] >0.165): #left upper
+      self.yvalue = np.random.randint(15,30)/100
+      #self.zvalue = np.random.randint(15,35)/100
+      self.zvalue = state[2]
+    elif(state[1]<-0.0015 and state[2] >0.165): #right upper
+      self.yvalue = np.random.randint(15,30)/100*-1
+      #self.zvalue = np.random.randint(15,35)/100
+      self.zvalue = state[2]
+    elif(-0.001<state[1]<0.001 and state[2] >0.165): #middle up
+      self.yvalue = 0
+      self.zvalue = 0.35
     else:
       self.yvalue = 0
-    self.zvalue = np.random.randint(10,35)/100
+      self.zvalue = 0.35
     print(self.yvalue)
     print(self.zvalue)
 
@@ -169,7 +184,7 @@ class CrossBlockExpertNormal(object):
     #pdb.set_trace()
     self.ierror += dpos
  
-    return next_pos,[target_point, target_point2, target_point3]
+    return next_pos
 
 '''class HalfCircleExpert(object):
     """ Expert to draw a circle centered at (cx, cy) with a radius of 0.2."""
@@ -239,23 +254,34 @@ def testExpert():
     if(done is True):
       print("done!!!!!!!!!!!!")'''
 
-def recordInfeasibleTraj(log_dir, traj_numdis=2, traj_num =18):
+def recordInfeasibleTraj(log_dir, traj_numdis=0, traj_num =1):
   env = gym.make("panda-v0")
   env = collectDemonsWrapper(env)  
 
   data = []
+  countd = 0
+  countu = 0
+  #statelist = [[0.24137686, -0.015, 0.12], [0.24872114, 0.015, 0.13]]
   for j in range(traj_num):
     state=env.reset()
-    expert = CrossBlockExpertNormal(state)  
-    traj=[state]
+    pdb.set_trace()
+    #state = statelist[j]
+    #env.panda._set_start(position=state)
+    #expert = CrossBlockExpertNormal(state)
+    while((state[2]<0.135 and countd==9) or (state[2]>0.165 and countu==9) or 0.135<=state[2]<=0.165 or (state[2]<=0.135 and -0.005<state[1]<0.005) or (state[2]>=0.165 and -0.0015<state[1]<-0.001) or (state[2]>=0.165 and 0.001<state[1]<0.0015)):
+      state=env.reset()
+    expert = CrossBlockExpertNormal(state)
+    if(state[2] <0.135):
+      countd+=1
+    else:
+      countu+=1
+    print(countd,countu)
+    traj=[np.array(state)]
     done = False
     while not done:
-      pos,target = expert.get_next_states(state)
+      pos = expert.get_next_states(state)
       state, r, done, info = env.step(pos)
-      extendstate = np.concatenate((state,target[0],target[1],target[2]))
-      traj.append(extendstate)
-    updateinit = np.concatenate((traj[0],target[0],target[1],target[2]))
-    traj[0] = updateinit
+      traj.append(np.array(state))
     data.append(np.array(traj))
   env.close()
   
@@ -264,19 +290,17 @@ def recordInfeasibleTraj(log_dir, traj_numdis=2, traj_num =18):
   for j in range(traj_numdis):  
     expert = CrossBlockExpert()
     state=env.reset()
-    traj=[state]
+    traj=[np.array(state)]
     done = False
     while not done:     
-      pos,target = expert.get_next_states(state)
+      pos = expert.get_next_states(state)
       state, r, done, info = env.step(pos)
-      extendstate = np.concatenate((state,target[0],target[1],target[2]))
-      traj.append(extendstate)
-    updateinit = np.concatenate((traj[0],target[0],target[1],target[2]))
-    traj[0] = updateinit
+      traj.append(np.array(state))
     data.append(np.array(traj))
   env.close()
   data = np.array(data)
-  pickle.dump(data, open(os.path.join(log_dir, 'infeasible_traj_9_1_withtarget.pkl'), 'wb'))
+  #pdb.set_trace()
+  pickle.dump(data, open(os.path.join(log_dir, 'infeasible_traj_9_1_final.pkl'), 'wb'))
 
 def plotDemons(pickle_path):
   #pdb.set_trace()
@@ -292,13 +316,26 @@ def plotDemons(pickle_path):
   plt.show()
   
 
+def rundemon(pickle_path):
+  #pdb.set_trace()
+  data = pickle.load(open(pickle_path, 'rb'))
+  env = gym.make("panda-v0")
+  env = collectDemonsWrapper(env)  
+  state = env.reset()
+  state = data[2][0]
+  expert = CrossBlockExpertNormal(state)  
+  done = False
+  while not done:
+    pos = expert.get_next_states(state)
+    state, r, done, info = env.step(pos)
+  env.close()
 
 if __name__ == '__main__':
   #testExpert()
   recordInfeasibleTraj(log_dir)
-  #pickle_path = os.path.join(log_dir, 'infeasible_traj_9_1_withtarget.pkl')
+  #pickle_path = os.path.join(log_dir, 'infeasible_traj_9_1_final.pkl')
   #plotDemons(pickle_path)
-
+  #rundemon(pickle_path)
   
  
 

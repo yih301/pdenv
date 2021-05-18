@@ -10,7 +10,7 @@ JOINT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 class Panda():
 
     def __init__(self, basePosition=[0,0,0]):
-        self.init_pos = [0.0, -0.5, 0.0, -2*np.pi/4-1.5, 0.0, np.pi/2+1.0, np.pi/4, 0.0, 0.0, 0.03, 0.03]
+        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, 3*np.pi/4, 0.0, 0.0, 0.03, 0.03]
         self.urdfRootPath="C:\\Users\\Yilun\\Desktop\\Robot\\pdenv\\gym_panda\\panda_bullet\\assets"
         #self.urdfRootPath = '/iliad/u/yilunhao/pdenv/gym_panda/gym_panda/panda_bullet/assets' #pybullet_data.getDataPath()
         self.panda = p.loadURDF(os.path.join(self.urdfRootPath,"franka_panda","panda.urdf"),useFixedBase=True,basePosition=basePosition)
@@ -163,7 +163,7 @@ class DisabledPanda(Panda):
         current_path = os.path.dirname(os.path.abspath(__file__))
         self.panda = p.loadURDF(os.path.join(current_path, "disabled_panda/disabled_panda.urdf"),useFixedBase=True,basePosition=basePosition)
         #self.init_pos = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.05, 0.05]
-        self.init_pos = [0.0, -0.5, 0.0, -2*np.pi/4-1.5, 0.0, np.pi/2+1.0, np.pi/4, 0.0, 0.0, 0.03, 0.03]
+        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, np.pi/4, 0.0, 0.0, 0.03, 0.03]
         self.status = "disabled"
        
 
