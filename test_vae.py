@@ -8,6 +8,7 @@ import copy
 import pickle
 import gym_panda
 from gym_panda.wrapper_env.wrapper import *
+import pdb
 
 '''#env = gym.make("panda-v0")
 vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\pandaenv-random-v0_0.005_vae.pt'
@@ -24,40 +25,38 @@ while i<50:
     i=i+1
     print(expect_state)'''
 
-'''env = gym.make("panda-v0")
-vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\0515_12\\pandaenv-random-v0_0.005_vae.pt'
-model = infeasibleVAEExpert(vae_path)
-
-done = False
+'''env = gym.make("disabledpanda-v0")
 state = env.reset()
-state = [ 2.89214939e-01, -6.08537960e-12,  1.61080852e-01, 0.41,0,0.35,0.71,0,0.35,  0.81,0,0.1]
+done=False
 while not done:
-    action = 100*(model.get_next_states(state)[:3]-state[:3])
+    action = np.array([0,10,0])
     state, rewards, done, info = env.step(action)
-    #print(state)
-    state = state['ee_position']
-    state = np.concatenate((state, np.array([0.41,0,0.35,0.71,0,0.35,  0.81,0,0.1])))'''
+    state = state['joint_position']
+    print(state)'''
 
 
 env = gym.make("panda-v0")
 vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\pandaenv-random-v0_0.005_vae.pt'
 model = infeasibleVAEExpert(vae_path)
+#expert_path = 'C:\\Users\\Yilun\\Desktop\\Robot\\logs\\data\\infeasible_traj_9_1_kongxi2.pkl'
+expert_path = 'C:\\Users\\Yilun\\Desktop\\Robot\\logs\\data\\infeasible_traj_9_1_0523_full.pkl'
+expert_traj_raw = list(pickle.load(open(expert_path, "rb")))
+#pdb.set_trace()
 
-done = False
-state = env.reset()
-#state = [ 0.2484009 , -0.00586368,  0.13431931]
-state =[ 2.93779939e-01, -1.82864940e-04,  1.69315249e-01]
-env.panda._set_start(position=state)
-#[0.24137686, -0.01, 0.12]
-#print(model.get_next_states(state))
-while not done:
-    ns = model.get_next_states(state)
-    action = 10*(ns-state)
-    #action = 100*model.get_next_states(state)
-    print(ns)
-    state, rewards, done, info = env.step(action)
-    state = state['ee_position']
-    #print(action,state)
+for i in range(len(expert_traj_raw)):
+    done = False
+    state = env.reset()
+    #state =expert_traj_raw[i][0]
+    jointposition = np.concatenate((expert_traj_raw[i][0][:9],np.array([0.03,0.03])),axis=None)
+    env.panda._reset_robot(jointposition)
+    state=env.panda.state['ee_position']
+    #pdb.set_trace()
+    while not done:
+        ns = model.get_next_states(state)
+        action = 10*(ns-state)
+        #print(ns)
+        state, rewards, done, info = env.step(action)
+        state = state['ee_position']
 
 '''vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\pandaenv-random-v0_0.005_vae.pt'
 model = infeasibleVAEExpert(vae_path)

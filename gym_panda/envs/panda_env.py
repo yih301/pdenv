@@ -1,21 +1,23 @@
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-from gym_panda.panda_bullet.panda import Panda, DisabledPanda
+from gym_panda.panda_bullet.panda import Panda, DisabledPanda, FeasibilityPanda
 from gym_panda.panda_bullet.objects import YCBObject, InteractiveObj, RBOObject
 import os
 import numpy as np
 import pybullet as p
 import pybullet_data
 import pdb
+import copy
+import pickle
 
 class PandaEnv(gym.Env):
   metadata = {'render.modes': ['human']}
   def __init__(self, panda_type=Panda):
     # create simulation (GUI)
     self.urdfRootPath = pybullet_data.getDataPath()
-    #p.connect(p.DIRECT)
-    p.connect(p.GUI)
+    p.connect(p.DIRECT)
+    #p.connect(p.GUI)
     p.setGravity(0, 0, -9.81)
 
     # set up camera
@@ -39,14 +41,15 @@ class PandaEnv(gym.Env):
     #self.arm_id = self.panda.panda
     #self.obj_id = obj2.body_id
 
-    self.n = 9 # 3
+    self.n = 3
     self.action_space = spaces.Box(low=-1.0, high=+1.0, shape=(self.n, ), dtype=np.float32)
-    self.observation_space = spaces.Box(low=-np.inf, high=+np.inf, shape=(33,), dtype=np.float32)
+    self.observation_space = spaces.Box(low=-np.inf, high=+np.inf, shape=(12,), dtype=np.float32)  #change this for different dimension (shape33)
 
     # load a panda robot
     #self.panda = Panda()
 
   def reset(self):
+    print("env")
     self.panda.reset()
     print( self.panda.state['ee_position'])
     #p.resetBasePositionAndOrientation(self.obj_id, self.panda.state['ee_position'], [0, 0, 0, 1])
@@ -62,7 +65,6 @@ class PandaEnv(gym.Env):
     p.disconnect()
 
   def step(self, action, verbose=False):
-    #print("env")
     """ mode = 1, controlling by end effector dposition
         mode = 0, controlling by joint action
     """
@@ -126,5 +128,73 @@ class DisabledPandaEnv(PandaEnv):
         action = action.squeeze()
         action1 = np.array([0., 0., 0.])
         action1[0] = action[0]
-        action1[2] = action[2]
+        #pdb.set_trace()
+        action1[2] = action[2]   #change to 1 for rl, 2 for collect demons
+        next_state = self.panda.state
         return super(DisabledPandaEnv, self).step(action1, verbose)
+
+
+class FeasibilityPandaEnv(PandaEnv):
+
+  def __init__(self, panda_type=FeasibilityPanda):
+    super(FeasibilityPandaEnv, self).__init__(panda_type=panda_type)
+    self.action_space = spaces.Box(low=np.array([-1., -1.]), high=np.array([1., 1.]), dtype=np.float32)
+    #self.gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0523_full.pkl', 'rb'))
+    self.gt_data =  pickle.load(open('infeasible_traj_9_1_0524_full.pkl', 'rb'))
+    self.time_step = 0
+    self.eps_len = 8000
+  
+  def _random_select(self, idx=None):
+        # random pick start pos
+        if idx is None:
+            #self.gt_num = np.random.choice(self.gt_data.shape[0]-2)
+            self.gt_num = np.random.choice(2)+18
+        else:
+            self.gt_num = idx
+        self.gt = self.gt_data[self.gt_num][:][:]
+        pos = self.gt[0][27:30]
+        jointposition = np.concatenate((self.gt[0][:9],np.array([0.03,0.03])),axis=None)
+        self.panda._reset_robot(jointposition)
+        self.eps_len = self.gt.shape[0]
+        #print(self.panda.state['ee_position'], pos)
+  
+    
+  def reset(self,idx=None):
+    self.panda.reset()
+    #print( self.panda.state['ee_position'])
+    self._random_select(idx)
+    self.time_step = 0
+    state =  np.concatenate((
+            self.panda.state['joint_position'],# 5
+            self.panda.state['ee_position'],# 3
+            ), axis=None)
+    #p.resetBasePositionAndOrientation(self.obj_id, self.panda.state['ee_position'], [0, 0, 0, 1])
+    #return self.panda.state['ee_position']
+    return state
+
+  def step(self, action,verbose=False):
+    action = action.squeeze()
+    action1 = np.array([0., 0., 0.])
+    action1[0] = action[0]
+    #pdb.set_trace()
+    action1[2] = action[1]
+    super(FeasibilityPandaEnv, self).step(action1, verbose)
+    state = self.panda.state['ee_position']
+    self.time_step += 1
+    done = (self.time_step >= self.eps_len - 1)
+    dis = np.linalg.norm(state - self.gt[self.time_step][27:30])
+    reward = -dis
+    #print(reward)
+    info = {}
+    self.prev_state = copy.deepcopy(state)
+    #full_state = self.panda.state['ee_position']
+    full_state =  np.concatenate((
+            self.panda.state['joint_position'],# 9
+            self.panda.state['ee_position'],# 3
+            ), axis=None)
+    info['dis'] = dis
+        
+    return full_state, reward, done, info
+
+      
+      

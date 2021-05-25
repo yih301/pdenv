@@ -79,9 +79,11 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 
 if __name__ == "__main__":
     # make env
-    env_name = "panda-v0"
+    env_name = "feasibilitypanda-v0"
+    #env_name = "disabledpanda-v0"
     env = gym.make(env_name)
-    env = SkipStepsWrapperVAE(env)
+    #pdb.set_trace()
+    #env = SkipStepsWrapperVAE(env)
     #env = infeasibleWrapper(env)
 
     # Create log dir

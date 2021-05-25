@@ -7,6 +7,7 @@ import numpy as np
 import copy
 import pickle
 import time
+import pdb
 
 class collectDemonsWrapper(gym.Wrapper):
     """ Wrapper used to collect demonstrations."""
@@ -17,29 +18,15 @@ class collectDemonsWrapper(gym.Wrapper):
         self.eps_len = 8000
         
 
-    def _random_reset(self):
-        """ Random pick init start positions.
-        Note: you can customize the range, but be sure to check the reachibility of the robot arm.
-        """
-        theta = np.random.uniform(low=0.0, high=2*np.pi)
-        phi = np.random.uniform(low=0.0, high=2*np.pi)
-        r = np.random.uniform(low=0.1, high=0.1)
-        dpos = [0.15+r*np.sin(theta)*np.cos(phi),r*np.sin(theta)*np.sin(phi),0.2+r*np.cos(theta)]
-        self.env.panda._set_start(position=dpos)
-
     def reset(self):
         self.env.reset()
-        #self._random_reset()
-        #self.env.resetobj()
         state = self.env.panda.state['ee_position']
-        print(state)
+        #print(state)
         self.time_step = 0
         return state
 
 
     def step(self, action):
-        #time.sleep(0.05)
-        #print("wrapper")
         self.env.step(action)       
         state = self.env.panda.state['ee_position']
         self.time_step += 1
@@ -60,58 +47,65 @@ class infeasibleWrapper(gym.Wrapper):
         gym.Wrapper.__init__(self, env)
         self.env = env
         self.time_step = 0
-        self.eps_len = 500
-        self.gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_demons.pkl', 'rb'))
+        self.eps_len = 8000
+        self.gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0523_full.pkl', 'rb'))
         
 
     def _random_select(self, state, idx=None):
+        #print("random select")
         # random pick start pos
         if idx is None:
-            self.gt_num = np.random.choice(self.gt_data.shape[0])
+            #self.gt_num = np.random.choice(self.gt_data.shape[0]-2)
+            self.gt_num = np.random.choice(2)+18
         else:
             self.gt_num = idx
-        self.gt = self.gt_data[self.gt_num, :, :]
+        self.gt = self.gt_data[self.gt_num][:][:]
+        
        
-        pos = self.gt[0, :]
+        pos = self.gt[0][27:30]
+        jointposition = np.concatenate((self.gt[0][:9],np.array([0.03,0.03])),axis=None)
         # pos[1] = 0
-        self.env.panda._set_start(position=pos)
+        self.env.panda._reset_robot(jointposition)
+        #pdb.set_trace()
+        self.eps_len = self.gt.shape[0]
         print(self.env.panda.state['ee_position'], pos)
 
     def reset(self,idx=None):
+        print("wrapper")
         self.env.reset()
         state = self.env.panda.state['ee_position']
         self._random_select(state,idx)
 
-        state =  np.concatenate((
+        '''state =  np.concatenate((
             self.env.panda.state['joint_position'],# 5
-            self.env.panda.state['joint_velocity'],# 5
-            self.env.panda.state['joint_torque'],# 5
             self.env.panda.state['ee_position'],# 3
-            self.env.panda.state['ee_euler'], # 3
-            ), axis=None)
+            ), axis=None)'''
+        state = self.env.panda.state['ee_position']
         self.time_step = 0
         
         return state
 
 
     def step(self, action):
+        #print("step in wrapper")
+        #pdb.set_trace()
+        #print("action is:" ,action)
         self.env.step(action)       
 
         state = self.env.panda.state['ee_position']
         self.time_step += 1
         done = (self.time_step >= self.eps_len - 1)
-        dis = 10 * np.linalg.norm(state - self.gt[self.time_step,:])
-        reward = - (dis**2)
+        dis = np.linalg.norm(state - self.gt[self.time_step][27:30])
+        #print(state, self.gt[self.time_step,:], dis)
+        reward = -dis
         info = {}
         self.prev_state = copy.deepcopy(state)
-        full_state =  np.concatenate((
-            self.env.panda.state['joint_position'],# 5
-            self.env.panda.state['joint_velocity'],# 5
-            self.env.panda.state['joint_torque'],# 5
+        '''full_state =  np.concatenate((
+            self.env.panda.state['joint_position'],# 9
             self.env.panda.state['ee_position'],# 3
-            self.env.panda.state['ee_euler'], # 3
-            ), axis=None)
-        info['dis'] = dis/10
+            ), axis=None)'''
+        full_state = self.env.panda.state['ee_position']
+        info['dis'] = dis
         
         return full_state, reward, done, info
 
@@ -130,6 +124,7 @@ class infeasibleVAEExpert():
         self.eps_len = 8000
 
     def get_next_states(self, state):
+        #pdb.set_trace()
         expect_state = self.model.get_next_states(torch.FloatTensor(state)).detach().numpy()
         return expect_state
     

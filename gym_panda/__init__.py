@@ -13,3 +13,8 @@ register(
     id='disabledpanda-v0',
     entry_point='gym_panda.envs:DisabledPandaEnv',
 )
+
+register(
+    id='feasibilitypanda-v0',
+    entry_point='gym_panda.envs:FeasibilityPandaEnv',
+)

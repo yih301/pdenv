@@ -3,14 +3,15 @@ import numpy as np
 import pybullet as p
 import pybullet_data
 import copy
-
+import pdb
+import pickle
 
 FIXED_JOINT_NUMBER = 0
 JOINT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 class Panda():
 
     def __init__(self, basePosition=[0,0,0]):
-        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, 3*np.pi/4, 0.0, 0.0, 0.03, 0.03]
+        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, np.pi/4, 0.0, 0.0, 0.03, 0.03]
         self.urdfRootPath="C:\\Users\\Yilun\\Desktop\\Robot\\pdenv\\gym_panda\\panda_bullet\\assets"
         #self.urdfRootPath = '/iliad/u/yilunhao/pdenv/gym_panda/gym_panda/panda_bullet/assets' #pybullet_data.getDataPath()
         self.panda = p.loadURDF(os.path.join(self.urdfRootPath,"franka_panda","panda.urdf"),useFixedBase=True,basePosition=basePosition)
@@ -38,7 +39,7 @@ class Panda():
         init_pos = copy.deepcopy(self.init_pos)
         #init_pos = [0.0, np.pi/3, 0.0, -1*np.pi/3, 0.0, 2*np.pi/3, 3*np.pi/4, 0.0, 0.0, 0.03, 0.03]
         random_number = np.random.uniform(low=-.1, high=.1, size=len(init_pos)) * 0.5
-        print(self.status)
+        #print(self.status)
         if(self.status == "disabled"):
             resetpos = [1,3,5]
         else:
@@ -99,6 +100,7 @@ class Panda():
 
     def _velocity_control(self, mode, djoint, dposition, dquaternion, grasp_open):
         if mode:
+            #pdb.set_trace()
             self.desired['ee_position'] += np.asarray(dposition) / 240.0
             self.desired['ee_quaternion'] += np.asarray(dquaternion) / 240.0
             q_dot = self._inverse_kinematics(self.desired['ee_position'], self.desired['ee_quaternion']) - self.state['joint_position']
@@ -142,14 +144,17 @@ class Panda():
         
     def _set_start(self,position):
         """ Set start positions."""
-        self.desired['ee_position'] = np.asarray(position)             
+        self.desired['ee_position'] = np.asarray(position)   
+        print("input position is", position)         
             
         self.desired['ee_quaternion'] = self.state['ee_quaternion']
         #print(dquaternion,self.desired['ee_quaternion'],self.state['ee_quaternion'])
 
         joint_position = list(self._inverse_kinematics(self.desired['ee_position'], self.desired['ee_quaternion']))
+
+        #pdb.set_trace()
         
-        djoint = (joint_position - self.state['joint_position'])
+        djoint = (np.array(joint_position) - self.state['joint_position'])
         joint_position = djoint + self.state['joint_position']
        
         for idx in range(len(joint_position)):
@@ -165,5 +170,11 @@ class DisabledPanda(Panda):
         #self.init_pos = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.05, 0.05]
         self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, np.pi/4, 0.0, 0.0, 0.03, 0.03]
         self.status = "disabled"
-       
 
+class FeasibilityPanda(Panda):
+    def __init__(self, basePosition=[0,0,0]):
+        self.urdfRootPath = pybullet_data.getDataPath()
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        self.panda = p.loadURDF(os.path.join(current_path, "disabled_panda/disabled_panda.urdf"),useFixedBase=True,basePosition=basePosition)
+        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, np.pi/4, 0.0, 0.0, 0.03, 0.03]
+        self.status = "feasibility"
