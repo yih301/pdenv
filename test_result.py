@@ -19,7 +19,8 @@ def test_model(MODEL_PATH):
     env = gym.make("feasibilitypanda-v0")
     #env = infeasibleWrapper(env)
     model = TRPO.load(MODEL_PATH)
-    gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0523_full.pkl', 'rb'))
+    gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0524_full.pkl', 'rb'))
+    pdb.set_trace()
 
 
     done = False
@@ -38,5 +39,5 @@ def test_model(MODEL_PATH):
             
 
 if __name__ == "__main__":
-    test_model('C:\\Users\\Yilun\\Desktop\\Robot\\logs\\models\\sb-trpo-joint-target-diffdynamics-2021-05-24\\best_model.zip')
+    test_model('C:\\Users\\Yilun\\Desktop\\Robot\\logs\\models\\sb-trpo-joint-target-diffdynamics-2021-05-25\\best_model.zip')
 

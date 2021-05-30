@@ -57,12 +57,15 @@ parser.add_argument('--discount', type=float, default=0.9)
 parser.add_argument('--discount_train', action='store_true')
 args = parser.parse_args()
 
-data =  pickle.load(open('infeasible_traj_9_1_0524_full.pkl', 'rb')) #20 traj
-normalpdata = data[:18]
-disabledpdata = data[18:20]
+#data =  pickle.load(open('infeasible_traj_9_1_0524_full.pkl', 'rb')) #20 traj
+data =  pickle.load(open('infeasible_traj_9_1_0528_full.pkl', 'rb')) #48 traj
+#normalpdata = data[:18]
+#disabledpdata = data[18:20]
+#lrdata = np.concatenate((data[:9], data[12:18]),axis=0)
+normalpdata = data
 
-test_demos = disabledpdata
-demos = disabledpdata
+test_demos = normalpdata
+demos = normalpdata
 
 test_env = gym.make(args.env_name)
 env = gym.make(args.env_name)
@@ -180,13 +183,14 @@ for i_episode in count(1):
     if i_episode % args.eval_interval == 1:
         for test_demo_id in range(1):
             all_reward = []
-            for ii in range(2):
+            for ii in range(48):
                 test_env.reset()
                 jointposition = np.concatenate((test_demos[ii][0][:9],np.array([0.03,0.03])),axis=None)
                 test_env.panda._reset_robot(jointposition)  #change into joint position
-                state = np.concatenate((test_env.panda.state['joint_position'],# 5
+                '''state = np.concatenate((test_env.panda.state['joint_position'],# 9
                         test_env.panda.state['ee_position'],# 3
-                        ), axis=None)
+                        ), axis=None)'''
+                state = test_env.panda.state['ee_position']
                 done = False
                 test_reward = 0
                 step_id = 0
@@ -202,9 +206,9 @@ for i_episode in count(1):
             print('reward', ' ', np.mean(all_reward))
             if best_reward < np.mean(all_reward):
                 best_reward = np.mean(all_reward)
-                torch.save(policy_net.state_dict(), args.save_path+'instantmodel')
+                torch.save(policy_net.state_dict(), args.save_path+'model')
             print('best reward: ', best_reward)
-        torch.save(save_model_dict, args.save_path + 'model')
+        #torch.save(save_model_dict, args.save_path + 'model')
         #torch.save(policy_net.state_dict(), args.save_path+'instantmodel')
         
     memory = Memory()

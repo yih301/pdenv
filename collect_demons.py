@@ -107,24 +107,27 @@ class CrossBlockExpertNormal(object):
  
     return next_pos
 
-def recordInfeasibleTraj(log_dir, traj_numdis=2, traj_num =18):
-  env = gym.make("panda-v0")
-  env = collectDemonsWrapper(env)  
+def recordInfeasibleTraj(log_dir, traj_numdis=48, traj_num =0):
+  #env = gym.make("panda-v0")
+  #env = collectDemonsWrapper(env)  
 
   data = []
   bigdata=[]
-  countd = 0
+  '''countd = 0
   countu = 0
+  countup=0
   #statelist = [[0.24137686, -0.015, 0.12], [0.24872114, 0.015, 0.13]]
   for j in range(traj_num):
     state=env.reset()
-    while((state[2]<0.135 and countd==9) or (state[2]>0.165 and countu==9) or 0.135<=state[2]<=0.165 or (state[2]<=0.135 and -0.005<state[1]<0.005) or (state[2]>=0.165 and -0.0035<state[1]<-0.003) or (state[2]>=0.165 and 0.003<state[1]<0.0035)):
+    while( (-0.003<state[1]<0.003 and state[2] >0.165 and countup==3) or (state[2]<0.135 and countd==24) or (state[2]>0.165 and countu==24) or 0.135<=state[2]<=0.165 or (state[2]<=0.135 and -0.005<state[1]<0.005) or (state[2]>=0.165 and -0.0035<state[1]<-0.003) or (state[2]>=0.165 and 0.003<state[1]<0.0035)):
       state=env.reset()
     expert = CrossBlockExpertNormal(state)
     if(state[2] <0.135):
       countd+=1
     else:
       countu+=1
+    if(-0.003<state[1]<0.003 and state[2] >0.165):
+      countup+=1
     print(countd,countu)
     bigstate =  np.concatenate((
             env.panda.state['joint_position'],# 5
@@ -155,7 +158,7 @@ def recordInfeasibleTraj(log_dir, traj_numdis=2, traj_num =18):
       bigtraj.append(bigstate)
     data.append(np.array(traj))
     bigdata.append(np.array(bigtraj))
-  env.close()
+  env.close()'''
   
   env = gym.make("disabledpanda-v0")
   env = collectDemonsWrapper(env)  
@@ -194,8 +197,8 @@ def recordInfeasibleTraj(log_dir, traj_numdis=2, traj_num =18):
   data = np.array(data)
   bigdata = np.array(bigdata)
   #pdb.set_trace()
-  pickle.dump(data, open(os.path.join(log_dir, 'infeasible_traj_9_1_0524.pkl'), 'wb'))
-  pickle.dump(bigdata, open(os.path.join(log_dir, 'infeasible_traj_9_1_0524_full.pkl'), 'wb'))
+  pickle.dump(data, open(os.path.join(log_dir, 'infeasible_traj_9_1_48dis.pkl'), 'wb'))
+  pickle.dump(bigdata, open(os.path.join(log_dir, 'infeasible_traj_9_1_48dis_full.pkl'), 'wb'))
 
 
 def plotDemons(pickle_path):
@@ -220,7 +223,7 @@ def rundemon():
   pdb.set_trace()
   env = gym.make("panda-v0")
   env = collectDemonsWrapper(env)
-  for i in range(len(expert_traj_raw)):  
+  for i in range(len(expert_traj_raw)-2):  
     state = env.reset()
     state = expert_traj_raw[i][0]
     env.panda._set_start(position=np.array(state))
@@ -234,7 +237,7 @@ def rundemon():
 if __name__ == '__main__':
   #testExpert()
   recordInfeasibleTraj(log_dir)
-  pickle_path = os.path.join(log_dir, 'infeasible_traj_9_1_0524.pkl')
+  pickle_path = os.path.join(log_dir, 'infeasible_traj_9_1_48dis.pkl')
   plotDemons(pickle_path)
   #rundemon()
   

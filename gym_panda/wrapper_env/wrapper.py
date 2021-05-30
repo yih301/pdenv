@@ -128,7 +128,7 @@ class infeasibleVAEExpert():
         expect_state = self.model.get_next_states(torch.FloatTensor(state)).detach().numpy()
         return expect_state
     
-    '''def step(self, action):
+    def step(self, action):
         print("step")
         self.env.step(action)       
         state = self.env.panda.state['ee_position']
@@ -138,7 +138,7 @@ class infeasibleVAEExpert():
         done = (self.time_step >= self.eps_len - 1) or np.linalg.norm(np.array([state[0] - 0.81, state[2] - 0.1])) < 0.028
         reward = 0
         info = {}      
-        return state, reward, done, info'''
+        return state, reward, done, info
 
 
 class SkipStepsWrapperVAE(gym.Wrapper):
@@ -146,7 +146,7 @@ class SkipStepsWrapperVAE(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
         #gym.Wrapper.__init__ does not have (self, env, path) so I pull it out
-        vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\pandaenv-random-v0_0.005_vae.pt'
+        vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\kongxilargem!!\\pandaenv-random-v0_0.005_vae.pt'
         #need to change path to run in cluster
         #vae_path = '/iliad/u/yilunhao/logs/pandaenv-random-v0_0.005_vae.pt'
         self.env = env
