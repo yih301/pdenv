@@ -183,7 +183,7 @@ class FeasibilityPandaEnv(PandaEnv):
               self.gt_data = self.gt_data1
             else:
               self.gt_data = self.gt_data2
-        print(self.gt_data.shape)
+        #print(self.gt_data.shape)
         self.gt = self.gt_data[self.gt_num][:][:]
         pos = self.gt[0][27:30]
         jointposition = np.concatenate((self.gt[0][:9],np.array([0.03,0.03])),axis=None)
