@@ -16,8 +16,8 @@ class PandaEnv(gym.Env):
   def __init__(self, panda_type=Panda):
     # create simulation (GUI)
     self.urdfRootPath = pybullet_data.getDataPath()
-    #p.connect(p.DIRECT)
-    p.connect(p.GUI)
+    p.connect(p.DIRECT)
+    #p.connect(p.GUI)
     p.setGravity(0, 0, -9.81)
 
     # set up camera
@@ -65,6 +65,10 @@ class PandaEnv(gym.Env):
 
   def close(self):
     p.disconnect()
+  
+  def seed(self, seed=None):
+        self.panda.seed(seed)
+        return [seed]
 
   def step(self, action, verbose=False):
     """ mode = 1, controlling by end effector dposition
@@ -158,20 +162,21 @@ class FeasibilityPandaEnv(PandaEnv):
     super(FeasibilityPandaEnv, self).__init__(panda_type=panda_type)
     self.action_space = spaces.Box(low=np.array([-1., -1.]), high=np.array([1., 1.]), dtype=np.float32)
     #self.gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0523_full.pkl', 'rb'))
-    self.gt_data1 =  pickle.load(open('infeasible_traj_9_1_0524_full.pkl', 'rb'))
+    #self.gt_data1 =  pickle.load(open('infeasible_traj_9_1_0524_full.pkl', 'rb'))
+    self.gt_data1 =  pickle.load(open('infeasible_traj_9_1_5dis_full.pkl', 'rb'))
     self.gt_data2 =  pickle.load(open('infeasible_traj_9_1_0528_full.pkl', 'rb'))
     #self.gt_data = np.concatenate((self.gt_data[:9], self.gt_data[12:18]),axis=0)
     self.time_step = 0
+    self.reward = 0
     self.eps_len = 8000
   
   def _random_select(self, idx=None, version=None):
         # random pick start pos
         if idx is None:
-            #self.gt_num = np.random.choice(self.gt_data.shape[0]-2)
-            #self.gt_num = np.random.choice(2)+18
+            self.gt_data = self.gt_data2
             self.gt_num = np.random.choice(self.gt_data.shape[0])
-            self.gt_data = self.gt_data1
-            #self.gt_data = self.gt_data2
+            #self.gt_data = self.gt_data1
+            #self.gt_num = np.random.choice(2)+18
         else:
             self.gt_num = idx
             if version == "dis":
@@ -199,9 +204,10 @@ class FeasibilityPandaEnv(PandaEnv):
     #p.resetBasePositionAndOrientation(self.obj_id, self.panda.state['ee_position'], [0, 0, 0, 1])
     return self.panda.state['ee_position']
     return state
+  
 
   def step(self, action,verbose=False):
-    #print(self.eps_len)
+    #print(action)
     action = action.squeeze()
     action1 = np.array([0., 0., 0.])
     action1[0] = action[0]

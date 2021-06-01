@@ -60,8 +60,7 @@ args = parser.parse_args()
 #data =  pickle.load(open('infeasible_traj_9_1_0524_full.pkl', 'rb')) #20 traj
 data =  pickle.load(open('infeasible_traj_9_1_0528_full.pkl', 'rb')) #48 traj
 #normalpdata = data[:18]
-#disabledpdata = data[18:20]
-#lrdata = np.concatenate((data[:9], data[12:18]),axis=0)
+disabledpdata = data[18:20]   #use this for disabled, and remember to change 48 to 2
 normalpdata = data
 
 test_demos = normalpdata
@@ -74,6 +73,7 @@ num_inputs = env.observation_space.shape[0]
 num_actions = env.action_space.shape[0]
 
 env.seed(args.seed)
+test_env.seed(args.seed)
 torch.manual_seed(args.seed)
 random.seed(args.seed)
 

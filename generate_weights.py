@@ -29,6 +29,9 @@ from stable_baselines import DDPG,PPO2, TRPO
 
 def generate_weight(DISMODEL_PATH,NORMALMODEL_PATH, FULL_DIS_DEMONS, FULL_NORMAL_DEMONS, DIS_DEMONS, FULL_DEMONS, SAVE_PATH,SAVE_PATH2):
     env = gym.make("feasibilitypanda-v0")
+    seed = 66
+    env.seed(seed)
+    torch.manual_seed(seed)
     num_inputs = env.observation_space.shape[0]
     num_actions = env.action_space.shape[0]
     policy_indices = list(range(num_inputs))
@@ -40,7 +43,8 @@ def generate_weight(DISMODEL_PATH,NORMALMODEL_PATH, FULL_DIS_DEMONS, FULL_NORMAL
     # get data
     full_disabled =  pickle.load(open(FULL_DIS_DEMONS, 'rb'))
     full_normal =  pickle.load(open(FULL_NORMAL_DEMONS, 'rb'))
-    disabled =  pickle.load(open(DIS_DEMONS, 'rb'))[18:20]
+    #disabled =  pickle.load(open(DIS_DEMONS, 'rb'))[18:20]
+    disabled =  pickle.load(open(DIS_DEMONS, 'rb'))
     normal =  pickle.load(open(FULL_DEMONS, 'rb'))
     discount = 0.9
 
@@ -49,7 +53,8 @@ def generate_weight(DISMODEL_PATH,NORMALMODEL_PATH, FULL_DIS_DEMONS, FULL_NORMAL
     for j in range(disabled.shape[0]):   #disable now is 2
         print("dis",j)
         trajweight = np.zeros(disabled[j].shape)  #shape is length of current traj
-        state = env.reset(j+18,"dis")
+        #state = env.reset(j+18,"dis")
+        state = env.reset(j,"dis")
         i = 0
         done = False
         while not done:
@@ -73,7 +78,7 @@ def generate_weight(DISMODEL_PATH,NORMALMODEL_PATH, FULL_DIS_DEMONS, FULL_NORMAL
             dis = info['dis']  #calculate the exp distance
             trajweight[i] = dis*discount**(i)
             i = i + 1
-        weights[j+2] = -np.sum(trajweight) #update weight traj by traj
+        weights[j+5] = -np.sum(trajweight) #update weight traj by traj
     
     #pdb.set_trace()
     
@@ -99,16 +104,31 @@ def generate_weight(DISMODEL_PATH,NORMALMODEL_PATH, FULL_DIS_DEMONS, FULL_NORMAL
         normal[i] = weights[i]*normal[i]'''
     data = np.concatenate((disabled,normal),axis= 0)
     pickle.dump(weights, open(SAVE_PATH, 'wb'))
-    pickle.dump(data, open(SAVE_PATH2, 'wb'))
+    #pickle.dump(data, open(SAVE_PATH2, 'wb'))
             
 
 if __name__ == "__main__":
-    generate_weight("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\3dim1instantmodel",
-                    "C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\normal\\normal481_4model",  
+    generate_weight("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\dis2_66model",
+                    "C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\normal\\normal48_66model",  
+                    '..\\logs\\data\\infeasible_traj_9_1_5dis_full.pkl',
+                    '..\\logs\\data\\infeasible_traj_9_1_0528_full.pkl',
+                    '..\\logs\\data\\infeasible_traj_9_1_5dis_full.pkl',
+                    '..\\logs\\data\\infeasible_traj_9_1_0528.pkl',
+                    '..\\logs\\data\\66_5dis_weights.pkl',
+                    '..\\logs\\data\\infeasible_traj_9_1_50.pkl')
+
+    '''generate_weight("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\dis2_66model",
+                    "C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\normal\\normal48_66model",  
                     '..\\logs\\data\\infeasible_traj_9_1_0524_full.pkl',
                     '..\\logs\\data\\infeasible_traj_9_1_0528_full.pkl',
                     '..\\logs\\data\\infeasible_traj_9_1_0524.pkl',
                     '..\\logs\\data\\infeasible_traj_9_1_0528.pkl',
-                    '..\\logs\\data\\infeasible_traj_9_1_50_weights.pkl',
-                    '..\\logs\\data\\infeasible_traj_9_1_50.pkl')
+                    '..\\logs\\data\\66_20_weights.pkl',
+                    '..\\logs\\data\\infeasible_traj_9_1_50.pkl')'''
+    '''disabled =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_5dis.pkl', 'rb'))
+    print(disabled.shape)
+    normal =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0528.pkl', 'rb'))
+    print(normal.shape)
+    data = np.concatenate((disabled,normal),axis= 0)
+    pickle.dump(data, open('..\\logs\\data\\infeasible_traj_9_1_53.pkl', 'wb'))'''
 

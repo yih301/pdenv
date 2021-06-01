@@ -5,6 +5,8 @@ import pybullet_data
 import copy
 import pdb
 import pickle
+from gym.utils import seeding
+
 
 FIXED_JOINT_NUMBER = 0
 JOINT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -47,6 +49,10 @@ class Panda():
         for i in resetpos:
             init_pos[i] += random_number[i]
         self._reset_robot(init_pos)
+    
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
 
 
     """internal functions"""
