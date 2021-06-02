@@ -173,9 +173,10 @@ class FeasibilityPandaEnv(PandaEnv):
   def _random_select(self, idx=None, version=None):
         # random pick start pos
         if idx is None:
-            self.gt_data = self.gt_data2
+            #self.gt_data = self.gt_data2
+            #self.gt_num = np.random.choice(self.gt_data.shape[0])
+            self.gt_data = self.gt_data1
             self.gt_num = np.random.choice(self.gt_data.shape[0])
-            #self.gt_data = self.gt_data1
             #self.gt_num = np.random.choice(2)+18
         else:
             self.gt_num = idx

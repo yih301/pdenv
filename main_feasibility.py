@@ -58,13 +58,15 @@ parser.add_argument('--discount_train', action='store_true')
 args = parser.parse_args()
 
 #data =  pickle.load(open('infeasible_traj_9_1_0524_full.pkl', 'rb')) #20 traj
-data =  pickle.load(open('infeasible_traj_9_1_0528_full.pkl', 'rb')) #48 traj
+data =  pickle.load(open('infeasible_traj_9_1_5dis_full.pkl', 'rb')) #5 traj
+#data =  pickle.load(open('infeasible_traj_9_1_0528_full.pkl', 'rb')) #48 traj
 #normalpdata = data[:18]
-disabledpdata = data[18:20]   #use this for disabled, and remember to change 48 to 2
-normalpdata = data
+#disabledpdata = data[18:20]   #use this for disabled, and remember to change 48 to 2
+#normalpdata = data
+disabledpdata = data
 
-test_demos = normalpdata
-demos = normalpdata
+test_demos = disabledpdata
+demos = disabledpdata
 
 test_env = gym.make(args.env_name)
 env = gym.make(args.env_name)
@@ -183,7 +185,7 @@ for i_episode in count(1):
     if i_episode % args.eval_interval == 1:
         for test_demo_id in range(1):
             all_reward = []
-            for ii in range(48):
+            for ii in range(5):
                 test_env.reset()
                 jointposition = np.concatenate((test_demos[ii][0][:9],np.array([0.03,0.03])),axis=None)
                 test_env.panda._reset_robot(jointposition)  #change into joint position
