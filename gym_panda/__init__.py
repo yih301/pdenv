@@ -18,3 +18,8 @@ register(
     id='feasibilitypanda-v0',
     entry_point='gym_panda.envs:FeasibilityPandaEnv',
 )
+
+register(
+    id='collectstatepairpanda-v0',
+    entry_point='gym_panda.envs:CollectStatePairPandaEnv',
+)

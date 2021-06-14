@@ -184,3 +184,15 @@ class FeasibilityPanda(Panda):
         self.panda = p.loadURDF(os.path.join(current_path, "disabled_panda/disabled_panda.urdf"),useFixedBase=True,basePosition=basePosition)
         self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, np.pi/4, 0.0, 0.0, 0.03, 0.03]
         self.status = "feasibility"
+
+
+class CollectStatePairPanda(Panda):
+    def __init__(self, basePosition=[0,0,0]):
+        self.urdfRootPath = pybullet_data.getDataPath()
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        self.panda = p.loadURDF(os.path.join(current_path, "disabled_panda/disabled_panda.urdf"),useFixedBase=True,basePosition=basePosition)
+        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, np.pi/4, 0.0, 0.0, 0.03, 0.03]
+        random_number = np.random.uniform(low=-np.pi, high=np.pi, size=len(self.init_pos)) * 0.5   #thus any init state
+        for i in [1,3,5]:
+            self.init_pos[i] += random_number[i]
+        self.status = "inverse"

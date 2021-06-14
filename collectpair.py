@@ -15,23 +15,20 @@ env = gym.make("disabledpanda-v0")
 env.seed(seed)
 torch.manual_seed(seed)
 np.random.seed(seed)
-#vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\data\\baseline\\model\\baseline100_3.pt'
-vae_path='C:\\Users\\Yilun\\Desktop\\Robot\\logs\\debug\\work!!\\3_normal.pt'
-model = infeasibleVAEExpert(vae_path)
-
-reward = []
-success = []
-for i in range(10):
+pairs = []
+for i in range(1000):
     done = False
     state = env.reset()['ee_position']
-    print(state)
+    #print(state)
     while not done:
-        ns = model.get_next_states(state)
-        action = 50*(ns-state)
+        prev_state = state
+        action = env.action_space.sample()
         state, rewards, done, info = env.step(action)
         state = state['ee_position']
-    reward.append(rewards)
-    success.append(rewards>0)
-
-print(reward)
-print(success)
+        #print(prevstate,state,action)
+        tosave = np.concatenate((prev_state,state,action),axis=0)
+        pairs.append(tosave)
+        #print(tosave)
+        #pdb.set_trace()
+#pickle.dump(pairs, open('..\\logs\\data\\pairs100.pkl'), 'wb')
+pickle.dump(pairs, open('..\\logs\\data\\baseline\\pairs1000_3.pkl', 'wb'))

@@ -22,18 +22,21 @@ num_inputs = env.observation_space.shape[0]
 num_actions = env.action_space.shape[0]
 policy_indices = list(range(num_inputs))
 
-seed=33
+seed=3    #3 6 22 66 3333
 env.seed(seed)
 torch.manual_seed(seed)
 policy_net = Policy(len(policy_indices), num_actions)
-#policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\3dim1instantmodel"))
-#policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\normal\\normaldim1_2instantmodel"))
-#policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\dis5_33model"))
-policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\normal48_3_4model"))
+policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\dis5_3model"))
+#torch.save(policy_net, "..\\logs\\goodfullmodel\\normal\\normal3333model")
+#policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\normal\\normal48_543model"))
+#policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\dis22_5model"))
+#policy_net.load_state_dict(torch.load("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\normal48_3333_12model"))
 #pdb.set_trace()
 
-#gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_5dis_full.pkl', 'rb'))
-gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0528_full.pkl', 'rb'))
+
+#gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0524_full.pkl', 'rb'))
+gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_5dis_full.pkl', 'rb'))
+#gt_data =  pickle.load(open('..\\logs\\data\\infeasible_traj_9_1_0528_full.pkl', 'rb'))
 done = False
 state = env.reset()
 jointposition = np.concatenate((gt_data[1][0][:9],np.array([0.03,0.03])),axis=None)

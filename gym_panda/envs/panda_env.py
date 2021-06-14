@@ -1,7 +1,7 @@
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-from gym_panda.panda_bullet.panda import Panda, DisabledPanda, FeasibilityPanda
+from gym_panda.panda_bullet.panda import Panda, DisabledPanda, FeasibilityPanda, CollectStatePairPanda
 from gym_panda.panda_bullet.objects import YCBObject, InteractiveObj, RBOObject
 import os
 import numpy as np
@@ -16,8 +16,8 @@ class PandaEnv(gym.Env):
   def __init__(self, panda_type=Panda):
     # create simulation (GUI)
     self.urdfRootPath = pybullet_data.getDataPath()
-    p.connect(p.DIRECT)
-    #p.connect(p.GUI)
+    #p.connect(p.DIRECT)
+    p.connect(p.GUI)
     p.setGravity(0, 0, -9.81)
 
     # set up camera
@@ -55,6 +55,8 @@ class PandaEnv(gym.Env):
     #p.resetBasePositionAndOrientation(self.obj_id, self.panda.state['ee_position'], [0, 0, 0, 1])
     self.reward = 0
     self.reachgoal = False
+    self.maxlength=4000
+    self.length=0
     return self.panda.state
 
   def resetobj(self):
@@ -94,13 +96,15 @@ class PandaEnv(gym.Env):
     self.reward -=1
     state = next_state['ee_position']
     #collision
-    self.reachgoal = np.linalg.norm(np.array([state[0] - 0.81, state[1],state[2] - 0.1])) < 0.028
+    self.reachgoal = np.linalg.norm(np.array([state[0] - 0.81, state[1],state[2] - 0.1])) < 0.05
     done =False
     if(self.reachgoal):
       self.reward+=5000
+      print("reach")
       done = True
     closest_point = p.getClosestPoints(self.arm_id, self.obj_id, 100)
     close_points = [[point[5], point[6]] for point in closest_point]
+    #pdb.set_trace()
     min_distance = 100
     for point_pair in close_points:
       dist = (point_pair[0][0]-point_pair[1][0])**2 + (point_pair[0][1]-point_pair[1][1])**2 + (point_pair[0][2]-point_pair[1][2])**2
@@ -109,8 +113,14 @@ class PandaEnv(gym.Env):
       if verbose:
         print(next_state['ee_position'], min_distance)
       if min_distance < 0.0001:
+        #pdb.set_trace()
         self.reward -= 10000
         done = True
+        break
+    self.length+=1
+    #print(self.length)
+    if(self.length==self.maxlength):
+      done = True
     info = {}
     return next_state, self.reward, done, info
 
@@ -173,9 +183,9 @@ class FeasibilityPandaEnv(PandaEnv):
   def _random_select(self, idx=None, version=None):
         # random pick start pos
         if idx is None:
-            #self.gt_data = self.gt_data2
+            self.gt_data = self.gt_data2
             #self.gt_num = np.random.choice(self.gt_data.shape[0])
-            self.gt_data = self.gt_data1
+            #self.gt_data = self.gt_data1
             self.gt_num = np.random.choice(self.gt_data.shape[0])
             #self.gt_num = np.random.choice(2)+18
         else:
@@ -184,7 +194,7 @@ class FeasibilityPandaEnv(PandaEnv):
               self.gt_data = self.gt_data1
             else:
               self.gt_data = self.gt_data2
-        #print(self.gt_data.shape)
+        print(self.gt_data.shape)
         self.gt = self.gt_data[self.gt_num][:][:]
         pos = self.gt[0][27:30]
         jointposition = np.concatenate((self.gt[0][:9],np.array([0.03,0.03])),axis=None)
@@ -231,6 +241,13 @@ class FeasibilityPandaEnv(PandaEnv):
     info['dis'] = dis
         
     return full_state, reward, done, info
+
+      
+class CollectStatePairPandaEnv(PandaEnv):
+
+  def __init__(self, panda_type=CollectStatePairPanda):
+    super(CollectStatePairPandaEnv, self).__init__(panda_type=panda_type)
+    self.action_space = spaces.Box(low=np.array([-1., -1.]), high=np.array([1., 1.]), dtype=np.float32)
 
       
       

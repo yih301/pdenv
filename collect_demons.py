@@ -16,6 +16,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 import pdb
+import torch
 
 
 log_dir = 'C:\\Users\\Yilun\\Desktop\\Robot\\logs\\data'
@@ -107,13 +108,15 @@ class CrossBlockExpertNormal(object):
  
     return next_pos
 
-def recordInfeasibleTraj(log_dir, traj_numdis=5, traj_num =0):
-  #env = gym.make("panda-v0")
-  #env = collectDemonsWrapper(env)  
+def recordInfeasibleTraj(log_dir, traj_numdis=5, traj_num =48):
+  env = gym.make("panda-v0")
+  env = collectDemonsWrapper(env)
+  env.seed(333)
 
   data = []
   bigdata=[]
-  '''countd = 0
+  action=[]
+  countd = 0
   countu = 0
   countup=0
   #statelist = [[0.24137686, -0.015, 0.12], [0.24872114, 0.015, 0.13]]
@@ -141,10 +144,12 @@ def recordInfeasibleTraj(log_dir, traj_numdis=5, traj_num =0):
     #pdb.set_trace()
     bigtraj = [bigstate]
     traj=[np.array(state)]
+    actionlist=[]
     done = False
     while not done:
       pos = expert.get_next_states(state)
       state, r, done, info = env.step(pos)
+      actionlist.append(np.array(pos))
       traj.append(np.array(state))
       bigstate =  np.concatenate((
             env.panda.state['joint_position'],# 5
@@ -158,9 +163,11 @@ def recordInfeasibleTraj(log_dir, traj_numdis=5, traj_num =0):
       bigtraj.append(bigstate)
     data.append(np.array(traj))
     bigdata.append(np.array(bigtraj))
-  env.close()'''
+    action.append(np.array(actionlist))
+  env.close()
   
   env = gym.make("disabledpanda-v0")
+  env.seed(333)
   env = collectDemonsWrapper(env)  
   for j in range(traj_numdis):  
     expert = CrossBlockExpert()
@@ -176,9 +183,11 @@ def recordInfeasibleTraj(log_dir, traj_numdis=5, traj_num =0):
             ), axis=None)
     bigtraj = [bigstate]
     traj=[np.array(state)]
+    actionlist=[]
     done = False
     while not done:     
       pos = expert.get_next_states(state)
+      actionlist.append(np.array(pos))
       state, r, done, info = env.step(pos)
       traj.append(np.array(state))
       bigstate =  np.concatenate((
@@ -193,12 +202,14 @@ def recordInfeasibleTraj(log_dir, traj_numdis=5, traj_num =0):
       bigtraj.append(bigstate)
     data.append(np.array(traj))
     bigdata.append(np.array(bigtraj))
+    action.append(np.array(actionlist))
   env.close()
   data = np.array(data)
   bigdata = np.array(bigdata)
   #pdb.set_trace()
-  pickle.dump(data, open(os.path.join(log_dir, 'infeasible_traj_9_1_5dis.pkl'), 'wb'))
-  pickle.dump(bigdata, open(os.path.join(log_dir, 'infeasible_traj_9_1_5dis_full.pkl'), 'wb'))
+  pickle.dump(data, open(os.path.join(log_dir, '5dis.pkl'), 'wb'))
+  pickle.dump(bigdata, open(os.path.join(log_dir, '5dis_full.pkl'), 'wb'))
+  pickle.dump(action, open(os.path.join(log_dir, '5dis_action.pkl'), 'wb'))
 
 
 def plotDemons(pickle_path):
@@ -236,8 +247,10 @@ def rundemon():
 
 if __name__ == '__main__':
   #testExpert()
+  torch.manual_seed(333)
+  np.random.seed(333)  
   recordInfeasibleTraj(log_dir)
-  pickle_path = os.path.join(log_dir, 'infeasible_traj_9_1_5dis.pkl')
+  pickle_path = os.path.join(log_dir, '5dis.pkl')
   plotDemons(pickle_path)
   #rundemon()
   

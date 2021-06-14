@@ -29,7 +29,7 @@ from stable_baselines import DDPG,PPO2, TRPO
 
 def generate_weight(DISMODEL_PATH,NORMALMODEL_PATH, FULL_DIS_DEMONS, FULL_NORMAL_DEMONS, DIS_DEMONS, FULL_DEMONS, SAVE_PATH,SAVE_PATH2):
     env = gym.make("feasibilitypanda-v0")
-    seed = 66
+    seed = 22
     env.seed(seed)
     torch.manual_seed(seed)
     num_inputs = env.observation_space.shape[0]
@@ -108,13 +108,13 @@ def generate_weight(DISMODEL_PATH,NORMALMODEL_PATH, FULL_DIS_DEMONS, FULL_NORMAL
             
 
 if __name__ == "__main__":
-    generate_weight("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\dis2_66model",
-                    "C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\normal\\normal48_66model",  
+    generate_weight("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\dis5_22model",
+                    "C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\normal\\normal48_22model",  
                     '..\\logs\\data\\infeasible_traj_9_1_5dis_full.pkl',
                     '..\\logs\\data\\infeasible_traj_9_1_0528_full.pkl',
-                    '..\\logs\\data\\infeasible_traj_9_1_5dis_full.pkl',
+                    '..\\logs\\data\\infeasible_traj_9_1_5dis.pkl',
                     '..\\logs\\data\\infeasible_traj_9_1_0528.pkl',
-                    '..\\logs\\data\\66_5dis_weights.pkl',
+                    '..\\logs\\data\\seeds\\5dis_22_weights.pkl',
                     '..\\logs\\data\\infeasible_traj_9_1_50.pkl')
 
     '''generate_weight("C:\\Users\\Yilun\\Desktop\\Robot\\logs\\good\\dis\\dis2_66model",
