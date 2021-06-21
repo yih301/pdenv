@@ -1,33 +1,41 @@
-# gym_panda
+###Set up the environment
 
-## Usage: 
-Git clone and pip install the repository
-```python
-import gym_panda
-from gym_panda.wrapper_env.wrapper import *
+###Data description(files in data folder)
+`dis5.pkl`: contains 5 expert trajs for 3DoF
+`normal48.pkl`: contains 48 expert trajs for 7DoF
+`dis5ee.pkl`: contains 5 expert trajs for 3DoF (ee_position only)
+`normal48ee.pkl`: contains 48 expert trajs for 7DoF(ee_position only)
+`all_53.pkl`: contains all 53 expert trajs(5+48)
+`dis5_3model`: rl feasibility model for dis5.pkl
+`normal48_3model`: rl feasibility model for normal48.pkl
+`weights_3.pkl`: the generated weight(feasibility) for 53 trajs(5+48)
+`3_fea.pt`: feasibility VAE model
+`3_normal.pt`: no feasibility VAE model
 
-env_name = "panda-v0"
-env = gym.make(env_name)
-```
+### How to create feasibility model
+The file to create feasibility model is main_feasibility.py.
+Important flags:
+--env-name: Use 'feasibilitypanda-v0' as the environment name
+--mode: Use 'dis' to create rl model for 3DoF robot arm, and use 'normal' to create rl model for 7DoF robot arm.
+Sample call:
+`python main_feasibility.py --env-name "feasibilitypanda-v0" --seed 3 --save_path "./data" --discount 1 --mode 'dis'`
 
-### Wrappers
+The file to generate weights(feasibility) from the rl model is generate_weights.py, this will be used to create VAE model
+Sample call:
+`python generate_weight.py`
 
-Three wrappers in `gym_panda/gym_panda/wrapper_env/wrapper.py`. 
-
-`collectDemonsWrapper` used to collect the demonstrations using `gym_panda/gym_panda/panda_bullet/collect_demons.py`.
-
-`infeasibleWrapper`: used to train a reinforcement learning agent to track multiple trajectories in demonstrations. 
-
-`SkipStepsWrapperVAE`: used to train a reinforcement learning agent using VAE as reference.
-
+### How to create VAE model
+`cd SAIL` to change to directory SAIL
+Sample call:
+To train VAE model with feasibility:
+`python train_VAE.py --state-dim 3 --expert-traj-path ../data/all_53.pkl --weight True --weight-path ../data/weights_3.pkl --size-per-traj 4000 --output-path ../data/ --epoch 1 --seed 3`
+To train VAE model without feasibility(baseline):
+`python train_VAE.py --state-dim 3 --expert-traj-path ../data/all_53.pkl --weight False --size-per-traj 4000 --output-path ../data/ --epoch 1 --seed 3`
 
 ### Tips:
 
-#### How to change dynamics
-`gym_panda/gym_panda/panda_bullet/panda.py` Line 121, you can change the disabled joint index by changing elements of ` disabled_joint_idx`
-
 #### Disable or Enable GUI
-`gym_panda/gym_panda/envs/panda_env.py` Line 17 and 18
+`gym_panda/gym_panda/envs/panda_env.py` Line 19 and 20
 ```python
 p.connect(p.DIRECT) # disable GUI
 p.connect(p.GUI) # Enable GUI

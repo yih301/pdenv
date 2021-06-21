@@ -1,7 +1,7 @@
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-from gym_panda.panda_bullet.panda import Panda, DisabledPanda, FeasibilityPanda, CollectStatePairPanda
+from gym_panda.panda_bullet.panda import Panda, DisabledPanda, FeasibilityPanda, RealPanda
 from gym_panda.panda_bullet.objects import YCBObject, InteractiveObj, RBOObject
 import os
 import numpy as np
@@ -137,7 +137,7 @@ class PandaEnv(gym.Env):
   def _set_camera(self):
     self.camera_width = 256
     self.camera_height = 256
-    p.resetDebugVisualizerCamera(cameraDistance=1.2, cameraYaw=0, cameraPitch=-30,
+    p.resetDebugVisualizerCamera(cameraDistance=1.2, cameraYaw=0, cameraPitch=-15,
                                     cameraTargetPosition=[0.5, -0.2, 0.0])
     self.view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0.5, 0, 0],
                                                             distance=1.0,
@@ -243,11 +243,125 @@ class FeasibilityPandaEnv(PandaEnv):
     return full_state, reward, done, info
 
       
-class CollectStatePairPandaEnv(PandaEnv):
+class RealPandaEnv(PandaEnv):
 
-  def __init__(self, panda_type=CollectStatePairPanda):
-    super(CollectStatePairPandaEnv, self).__init__(panda_type=panda_type)
+  def __init__(self, panda_type=RealPanda):
+    self.urdfRootPath = pybullet_data.getDataPath()
+    #p.connect(p.DIRECT)
+    p.connect(p.GUI)
+    p.setGravity(0, 0, -9.81)
+    self._set_camera()
+
+    p.loadURDF(os.path.join(self.urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.65])
+    p.loadURDF(os.path.join(self.urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.65])
+
+    obj1 = YCBObject('czj_book_stand')
+    obj1.load()
+    p.resetBasePositionAndOrientation(obj1.body_id, [0.42, 0., 0.0], [0, 0, 0, 1])
+    obj2 = YCBObject('czj_book_stand')
+    obj2.load()
+    p.resetBasePositionAndOrientation(obj2.body_id, [0.68, 0., 0.0], [0, 0, 0, 1])
+    obj3 = YCBObject('czj_book_stand')
+    obj3.load()
+    p.resetBasePositionAndOrientation(obj3.body_id, [1.0, 0., 0.0], [0, 0, 0, 1])
+    obj4 = YCBObject('czj_book_stand_book')
+    obj4.load()
+    p.resetBasePositionAndOrientation(obj4.body_id, [0.55, 0, 0], [0, 0, 0, 1])
+    obj5 = YCBObject('czj_book_stand_book_2')
+    obj5.load()
+    p.resetBasePositionAndOrientation(obj5.body_id, [0.55, 0, 0], [0, 0, 0, 1])
+    self.panda = panda_type()
+    self.arm_id = self.panda.panda
+    self.obj_id = obj5.body_id
+    self.obj_id2 = obj1.body_id
+
+    self.n = 3
     self.action_space = spaces.Box(low=np.array([-1., -1.]), high=np.array([1., 1.]), dtype=np.float32)
+    self.observation_space = spaces.Box(low=-np.inf, high=+np.inf, shape=(3,), dtype=np.float32)
+    self.point1 = [0.15,0,0.87] #imitationExpert
+    self.point2 = [0.16,0,0.17] #ralExpert
+    self.point3 = [0.15,0,0.87] #sailExpert
+    self.point4 = [0.8,0,0.1] #ourExpert
+    self.point = self.point4
+
+  def reset(self):
+    print("real reset")
+    self.panda.reset()
+    self.resetobj()
+    print( self.panda.state['ee_position'])
+    self.reward = 0
+    self.reachgoal = False
+    self.maxlength=8000
+    self.length=0
+    return self.panda.state
+  
+  def resetobj(self):
+    #print("Hi!!!!!!!!!!!")
+    print( self.panda.state['ee_position']) #+np.array([0,0,0.1])
+    p.resetBasePositionAndOrientation(self.obj_id, self.panda.state['ee_position'], [0, 0, 0, 1])
+    return self.panda.state
+  
+  def step(self, action, verbose=False):
+    # get current state
+    state = self.panda.state
+    self.panda.step(dposition=action)
+
+    # take simulation step
+    p.stepSimulation()
+
+    # return next_state, reward, done, info
+    next_state = self.panda.state
+    self.reward -=1
+    state = next_state['ee_position']
+    #collision
+    #print(np.linalg.norm(np.array([state[0] - self.point[0], state[1],state[2] - self.point[2]])))
+    self.reachgoal = np.linalg.norm(np.array([state[0] - self.point[0], state[1],state[2] - self.point[2]])) < 0.05
+    done =False
+    if(self.reachgoal):
+      self.reward+=5000
+      print("reach")
+      done = True
+    closest_point = p.getClosestPoints(self.arm_id, self.obj_id2, 100)
+    close_points = [[point[5], point[6]] for point in closest_point]
+    #pdb.set_trace()
+    min_distance = 100
+    for point_pair in close_points:
+      dist = (point_pair[0][0]-point_pair[1][0])**2 + (point_pair[0][1]-point_pair[1][1])**2 + (point_pair[0][2]-point_pair[1][2])**2
+      if dist < min_distance:
+        min_distance = dist
+      if verbose:
+        print(next_state['ee_position'], min_distance)
+      if min_distance < 0.0001:
+        #pdb.set_trace()
+        self.reward -= 10000
+        done = True
+        break
+    self.length+=1
+    #print(self.length)
+    if(self.length==self.maxlength):
+      self.reward -=5000
+      done = True
+    info = {}
+    return next_state, self.reward, done, info
+
+  def _set_camera(self):
+    self.camera_width = 256
+    self.camera_height = 256
+    p.resetDebugVisualizerCamera(cameraDistance=1.2, cameraYaw=0, cameraPitch=-15,
+                                    cameraTargetPosition=[0.5, -0.2, 0.0])
+    self.view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0.5, 0, 0],
+                                                            distance=1.0,
+                                                            yaw=90,
+                                                            pitch=-50,
+                                                            roll=0,
+                                                            upAxisIndex=2)
+    self.proj_matrix = p.computeProjectionMatrixFOV(fov=60,
+                                                    aspect=float(self.camera_width) / self.camera_height,
+                                                    nearVal=0.1,
+                                                    farVal=100.0)
+
+  
+
 
       
       

@@ -226,7 +226,7 @@ expert_pairs, expert_trajs, pair_traj_id = load_demos(args.demo_files)
 feasibility_traj = compute_feasibility_traj(expert_trajs, inverse_model, f_env, full_demo)
 #pdb.set_trace()
 #feasibility = feasibility_traj[pair_traj_id]
-pickle.dump(feasibility_traj, open('..\\logs\\data\\baseline\\baselinefea1000_3.pkl', 'wb'))
+pickle.dump(feasibility_traj, open('..\\logs\\data\\baseline\\baselinefea1000_666.pkl', 'wb'))
 '''#expert_traj = np.concatenate(expert_pairs, axis=0)
 #pdb.set_trace()
 expert_traj = np.array(expert_pairs)

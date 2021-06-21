@@ -20,6 +20,6 @@ register(
 )
 
 register(
-    id='collectstatepairpanda-v0',
-    entry_point='gym_panda.envs:CollectStatePairPandaEnv',
+    id='realpanda-v0',
+    entry_point='gym_panda.envs:RealPandaEnv',
 )

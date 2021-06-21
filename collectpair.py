@@ -10,7 +10,7 @@ import gym_panda
 from gym_panda.wrapper_env.wrapper import *
 import pdb
 
-seed = 3
+seed = 6
 env = gym.make("disabledpanda-v0")
 env.seed(seed)
 torch.manual_seed(seed)
@@ -31,4 +31,4 @@ for i in range(1000):
         #print(tosave)
         #pdb.set_trace()
 #pickle.dump(pairs, open('..\\logs\\data\\pairs100.pkl'), 'wb')
-pickle.dump(pairs, open('..\\logs\\data\\baseline\\pairs1000_3.pkl', 'wb'))
+pickle.dump(pairs, open('..\\logs\\data\\baseline\\pairs1000_6.pkl', 'wb'))

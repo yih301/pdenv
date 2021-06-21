@@ -26,7 +26,7 @@ class Panda():
     # djoint is a 7-dimensional vector of joint velocities
     # dposition is a 3-dimensional vector of end-effector linear velocities
     # dquaternion is a 4-dimensional vector of end-effector quaternion velocities
-    def step(self, mode=1, djoint=[0]*7, dposition=[0]*3, dquaternion=[0]*4, grasp_open=True):
+    def step(self, mode=1, djoint=[0]*7, dposition=[0]*3, dquaternion=[0]*4, grasp_open=False):
 
         # velocity control
         self._velocity_control(mode=mode, djoint=djoint, dposition=dposition, dquaternion=dquaternion, grasp_open=grasp_open)
@@ -186,13 +186,10 @@ class FeasibilityPanda(Panda):
         self.status = "feasibility"
 
 
-class CollectStatePairPanda(Panda):
+class RealPanda(Panda):
     def __init__(self, basePosition=[0,0,0]):
         self.urdfRootPath = pybullet_data.getDataPath()
         current_path = os.path.dirname(os.path.abspath(__file__))
         self.panda = p.loadURDF(os.path.join(current_path, "disabled_panda/disabled_panda.urdf"),useFixedBase=True,basePosition=basePosition)
-        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, np.pi/4, 0.0, 0.0, 0.03, 0.03]
-        random_number = np.random.uniform(low=-np.pi, high=np.pi, size=len(self.init_pos)) * 0.5   #thus any init state
-        for i in [1,3,5]:
-            self.init_pos[i] += random_number[i]
-        self.status = "inverse"
+        self.init_pos = [0.0, -np.pi/6, 0.0, -2*np.pi/4-np.pi/2, 0.0, np.pi/2+np.pi/3, 3*np.pi/4, 0.0, 0.0, 0.02, 0.02]
+        self.status = "real"
